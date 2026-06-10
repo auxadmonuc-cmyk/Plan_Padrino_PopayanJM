@@ -1,0 +1,99 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account authorized to access the system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string", "enum": ["Administrador", "Consulta"] },
+        "isActive": { "type": "boolean" },
+        "email": { "type": "string" }
+      },
+      "required": ["id", "username", "fullName", "role", "isActive", "email"]
+    },
+    "Evidence": {
+      "title": "Evidence",
+      "description": "Evidence file uploaded to support a milestone",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "fileName": { "type": "string" },
+        "fileType": { "type": "string", "enum": ["pdf", "word", "excel", "image", "video"] },
+        "fileSize": { "type": "string" },
+        "uploadedAt": { "type": "string" },
+        "uploadedBy": { "type": "string" },
+        "url": { "type": "string" }
+      },
+      "required": ["id", "fileName", "fileType", "fileSize", "uploadedAt", "uploadedBy"]
+    },
+    "Milestone": {
+      "title": "Milestone",
+      "description": "An onboarding milestone with date, status, comments, and evidences",
+      "type": "object",
+      "properties": {
+        "scheduledDate": { "type": "string" },
+        "executedDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pendiente", "En proceso", "Completado"] },
+        "remarks": { "type": "string" },
+        "evidences": { "type": "array"}
+      },
+      "required": ["scheduledDate", "status", "remarks", "evidences"]
+    },
+    "Collaborator": {
+      "title": "Collaborator",
+      "description": "Collaborator undergoing onboarding mentorship",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "documentId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "role": { "type": "string" },
+        "area": { "type": "string" },
+        "costCenter": { "type": "string" },
+        "company": { "type": "string" },
+        "immediateBoss": { "type": "string" },
+        "entryDate": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "status": { "type": "string", "enum": ["Activo", "Retirado"] },
+        "induction": { "$ref": "#/entities/Milestone" },
+        "day7": { "$ref": "#/entities/Milestone" },
+        "day30": { "$ref": "#/entities/Milestone" },
+        "day90": { "$ref": "#/entities/Milestone" }
+      },
+      "required": ["id", "documentId", "fullName", "role", "area", "costCenter", "company", "immediateBoss", "entryDate", "email", "phone", "status", "induction", "day7", "day30", "day90"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Security audit record of system modifications",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "userId": { "type": "string" },
+        "userFullName": { "type": "string" },
+        "action": { "type": "string" },
+        "targetName": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "required": ["id", "timestamp", "userId", "userFullName", "action", "targetName", "details"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Authorized operators data"
+    },
+    "/collaborators/{collaboratorId}": {
+      "schema": "Collaborator",
+      "description": "Collaborators tracked"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Safety log entries"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Gestión de Padrinamiento",
+  "description": "Sistema profesional para el seguimiento y gestión de padrinamiento de colaboradores en sus primeros 7, 30 y 90 días de onboarding.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
