@@ -29,6 +29,7 @@ import ReportGenerator from './components/ReportGenerator';
 import AuditHistory from './components/AuditHistory';
 import UsersConfig from './components/UsersConfig';
 import PadrinosConfig from './components/PadrinosConfig';
+import Logo from './components/Logo';
 
 // Import Firestore client & utilities
 import { collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from 'firebase/firestore';
@@ -412,7 +413,7 @@ export default function App() {
 
   // Logged Out gate
   if (!currentUser) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
+    return <Login onLoginSuccess={handleLoginSuccess} usersList={usersList} />;
   }
 
   return (
@@ -421,101 +422,106 @@ export default function App() {
       {/* Top Professional Header Bar */}
       <header className="bg-slate-950 text-white shadow-md border-b border-slate-900 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16.5 items-center">
+          <div className="flex justify-between h-[72px] items-center">
             
-            {/* Logo */}
-            <div className="flex items-center gap-2.5">
-              <div className="h-9 w-9 bg-gradient-to-tr from-blue-700 to-amber-500 rounded-lg flex items-center justify-center font-black text-white shadow-xs border border-blue-800">
-                TH
-              </div>
-              <div>
-                <h1 className="text-xs font-black tracking-wide uppercase font-sans text-white">
-                  Padrinamiento
-                </h1>
-                <p className="text-[10px] text-amber-400 font-extrabold tracking-widest leading-none">
-                  ONBOARDING U.
-                </p>
+            {/* Logo y Nombre del Programa Unificado */}
+            <div className="flex items-center gap-3">
+              <Logo variant="dark" showText={false} />
+              <div className="h-8 w-px bg-slate-800" />
+              <div className="flex flex-col select-none leading-none">
+                <span className="text-[14px] font-black tracking-wider uppercase font-sans text-white leading-none">
+                  Logística
+                </span>
+                <span className="text-[9.5px] text-amber-400 font-extrabold tracking-widest leading-none mt-1 uppercase">
+                  Apadrinamiento
+                </span>
               </div>
             </div>
 
             {/* Desktop Navigation Link Tabs */}
-            <nav className="hidden md:flex gap-1">
+            <nav className="hidden md:flex items-center gap-1.5">
               <button
                 id="tab_dashboard"
                 onClick={() => { setSelectedColabId(null); setActiveTab('dashboard'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
                   activeTab === 'dashboard'
                     ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
                     : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
                 }`}
+                title="Dashboard"
               >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
+                <LayoutDashboard className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Dashboard</span>
               </button>
 
               <button
                 id="tab_colaboradores"
                 onClick={() => { setSelectedColabId(null); setActiveTab('colaboradores'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
                   activeTab === 'colaboradores' || activeTab === 'detail'
                     ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
                     : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
                 }`}
+                title="Colaboradores"
               >
-                <Users className="h-4 w-4" />
-                Colaboradores
+                <Users className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Colaboradores</span>
               </button>
 
               <button
                 id="tab_reportes"
                 onClick={() => { setSelectedColabId(null); setActiveTab('reportes'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
                   activeTab === 'reportes'
                     ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
                     : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
                 }`}
+                title="Reportes / Descargas"
               >
-                <FileBarChart2 className="h-4 w-4" />
-                Reportes
+                <FileBarChart2 className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Reportes</span>
               </button>
 
               <button
                 id="tab_auditoria"
                 onClick={() => { setSelectedColabId(null); setActiveTab('auditoria'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
                   activeTab === 'auditoria'
                     ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
                     : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
                 }`}
+                title="Historial de Auditoría"
               >
-                <History className="h-4 w-4" />
-                Historial Cambios
+                <History className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Historial</span>
               </button>
 
               <button
                 id="tab_usuarios"
                 onClick={() => { setSelectedColabId(null); setActiveTab('usuarios'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
                   activeTab === 'usuarios'
                     ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
                     : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
                 }`}
+                title="Administración de Usuarios"
               >
-                <Settings className="h-4 w-4" />
-                Usuarios
+                <Settings className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Usuarios</span>
               </button>
 
               <button
                 id="tab_padrinos"
                 onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); }}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
                   activeTab === 'padrinos'
                     ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
                     : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
                 }`}
+                title="Configuración de Padrinos"
               >
-                <Award className="h-4 w-4" />
-                Padrinos / Mentores
+                <Award className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Padrinos</span>
               </button>
             </nav>
 
@@ -631,19 +637,19 @@ export default function App() {
               <button
                 id="btn_logout"
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-extrabold transition active:scale-95"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-extrabold transition active:scale-95"
                 title="Cerrar Sesión Segura"
               >
                 <LogOut className="h-4 w-4 text-rose-400" />
-                <span className="hidden sm:inline">Cerrar Sesión</span>
+                <span>Cerrar Sesión</span>
               </button>
 
               {/* Mobile menu trigger */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-1 text-slate-200 hover:text-white md:hidden"
+                className="p-1 px-2 text-slate-200 hover:text-white hover:bg-slate-900 hover:border-slate-800 border border-transparent rounded-lg md:hidden"
               >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
 
             </div>
@@ -653,55 +659,89 @@ export default function App() {
 
         {/* Mobile slide-down menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-slate-900 border-t border-slate-800 p-4 space-y-2">
-            <button
-              onClick={() => { setSelectedColabId(null); setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
-              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
-                activeTab === 'dashboard' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-            >
-              Dashboard
-            </button>
-            <button
-              onClick={() => { setSelectedColabId(null); setActiveTab('colaboradores'); setIsMobileMenuOpen(false); }}
-              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
-                activeTab === 'colaboradores' || activeTab === 'detail' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-            >
-              Colaboradores
-            </button>
-            <button
-              onClick={() => { setSelectedColabId(null); setActiveTab('reportes'); setIsMobileMenuOpen(false); }}
-              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
-                activeTab === 'reportes' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-            >
-              Reportes
-            </button>
-            <button
-              onClick={() => { setSelectedColabId(null); setActiveTab('auditoria'); setIsMobileMenuOpen(false); }}
-              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
-                activeTab === 'auditoria' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-            >
-              Historial Cambios
-            </button>
-            <button
-              onClick={() => { setSelectedColabId(null); setActiveTab('usuarios'); setIsMobileMenuOpen(false); }}
-              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
-                activeTab === 'usuarios' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-            >
-              Usuarios
-            </button>
-            <button
-              onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); setIsMobileMenuOpen(false); }}
-              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
-                activeTab === 'padrinos' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
-              }`}
-            >
-              Padrinos
-            </button>
+          <div className="md:hidden bg-slate-950 border-t border-slate-900 p-4 space-y-4">
+            {/* User Profile Card inside mobile menu */}
+            <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-blue-950 border border-blue-800 flex justify-center items-center text-xs font-black text-amber-400">
+                {currentUser.fullName.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase()}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-slate-100">{currentUser.fullName}</span>
+                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider mt-0.5">{currentUser.role}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('dashboard'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'dashboard' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <LayoutDashboard className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Dashboard</span>
+              </button>
+              
+              <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('colaboradores'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'colaboradores' || activeTab === 'detail' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <Users className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Colaboradores</span>
+              </button>
+
+              <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('reportes'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'reportes' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <FileBarChart2 className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Reportes</span>
+              </button>
+
+              <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('auditoria'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'auditoria' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <History className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Historial Cambios</span>
+              </button>
+
+              <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('usuarios'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'usuarios' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <Settings className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Usuarios</span>
+              </button>
+
+              <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'padrinos' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <Award className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Padrinos</span>
+              </button>
+            </div>
+
+            <div className="pt-2 border-t border-slate-900">
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); handleLogout(); }}
+                className="w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-950/30 flex items-center gap-2.5 transition duration-150"
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
           </div>
         )}
       </header>
@@ -776,10 +816,10 @@ export default function App() {
       </main>
 
       {/* Corporate bottom credit footer */}
-      <footer className="bg-slate-900 text-slate-400 py-6 border-t border-slate-850 mt-auto text-xs text-center font-semibold">
+      <footer className="bg-slate-900 text-slate-400 py-6 border-t border-slate-850 mt-auto text-xs text-center font-semibold text-slate-400">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <span>
-            © 2026 Gestión de Padrinamiento Onboarding • Sistema Integral de Talento Humano
+            © 2026 Gestión de Apadrinamiento Onboarding • Sistema Integral de Talento Humano
           </span>
         </div>
       </footer>

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Users, 
   CircleDot, 
@@ -10,7 +10,8 @@ import {
   TrendingUp, 
   Building2, 
   ArrowRight,
-  Briefcase
+  Briefcase,
+  HelpCircle
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -97,6 +98,84 @@ export default function Dashboard({
     };
   }, [collaborators]);
 
+  // Active selected tab for detailed milestones tracking
+  const [selectedPhase, setSelectedPhase] = useState<'induction' | 'day7' | 'day30' | 'day90'>('day7');
+
+  // Compute breakdown for each milestone phase (Induction, day7, day30, day90)
+  const milestonesAnalytics = useMemo(() => {
+    const active = collaborators.filter(c => c.status === 'Activo');
+    
+    const initialObj = () => ({
+      completed: [] as Collaborator[],
+      inProgress: [] as Collaborator[],
+      overdue: [] as Collaborator[],
+      pending: [] as Collaborator[],
+    });
+
+    const phases = {
+      induction: initialObj(),
+      day7: initialObj(),
+      day30: initialObj(),
+      day90: initialObj(),
+    };
+
+    active.forEach(c => {
+      // 1. Induction
+      const ind = c.induction || { status: 'Pendiente', scheduledDate: c.entryDate };
+      const dInd = getDiffInDays(ind.scheduledDate, SIM_DATE);
+      if (ind.status === 'Completado') {
+        phases.induction.completed.push(c);
+      } else if (ind.status === 'En proceso') {
+        phases.induction.inProgress.push(c);
+      } else if (dInd < 0) {
+        phases.induction.overdue.push(c);
+      } else {
+        phases.induction.pending.push(c);
+      }
+
+      // 2. Day 7
+      const d7 = c.day7 || { status: 'Pendiente', scheduledDate: c.entryDate };
+      const dDays7 = getDiffInDays(d7.scheduledDate, SIM_DATE);
+      if (d7.status === 'Completado') {
+        phases.day7.completed.push(c);
+      } else if (d7.status === 'En proceso') {
+        phases.day7.inProgress.push(c);
+      } else if (dDays7 < 0) {
+        phases.day7.overdue.push(c);
+      } else {
+        phases.day7.pending.push(c);
+      }
+
+      // 3. Day 30
+      const d30 = c.day30 || { status: 'Pendiente', scheduledDate: c.entryDate };
+      const dDays30 = getDiffInDays(d30.scheduledDate, SIM_DATE);
+      if (d30.status === 'Completado') {
+        phases.day30.completed.push(c);
+      } else if (d30.status === 'En proceso') {
+        phases.day30.inProgress.push(c);
+      } else if (dDays30 < 0) {
+        phases.day30.overdue.push(c);
+      } else {
+        phases.day30.pending.push(c);
+      }
+
+      // 4. Day 90
+      const d90 = c.day90 || { status: 'Pendiente', scheduledDate: c.entryDate };
+      const dDays90 = getDiffInDays(d90.scheduledDate, SIM_DATE);
+      if (d90.status === 'Completado') {
+        phases.day90.completed.push(c);
+      } else if (d90.status === 'En proceso') {
+        phases.day90.inProgress.push(c);
+      } else if (dDays90 < 0) {
+        phases.day90.overdue.push(c);
+      } else {
+        phases.day90.pending.push(c);
+      }
+    });
+
+    return phases;
+  }, [collaborators]);
+
   // Data for Charts
   // 1. Milestone Status Distribution
   const milestoneDistributionData = useMemo(() => {
@@ -178,7 +257,7 @@ export default function Dashboard({
     return Object.keys(companies).map(key => {
       return {
         empresa: key,
-        'Padrinamientos Totales': companies[key].total,
+        'Apadrinamientos Totales': companies[key].total,
         'Onboardings Cerrados': companies[key].completed,
       };
     });
@@ -191,10 +270,10 @@ export default function Dashboard({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
         <div>
           <h1 className="text-2xl font-bold font-sans text-slate-900 tracking-tight">
-            Panel de Control de Padrinamiento
+            Panel de Control de Apadrinamiento
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Información en tiempo real del onboarding y planes de padrinamiento para el período de inducción. Evaluaciones automáticas al <span className="font-semibold text-slate-700">06/06/2026</span>.
+            Información en tiempo real del onboarding y planes de apadrinamiento para el período de inducción. Evaluaciones automáticas al <span className="font-semibold text-slate-700">06/06/2026</span>.
           </p>
         </div>
         <div className="flex gap-2">
@@ -263,7 +342,7 @@ export default function Dashboard({
         {/* Metric 4 */}
         <div id="metric_completed" className="bg-white p-5 rounded-2xl border border-slate-100 shadow-3xs flex flex-col justify-between transition-transform duration-200 hover:-translate-y-0.5">
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-semibold tracking-wide uppercase">Padrinamientos Listos</span>
+            <span className="text-slate-400 text-xs font-semibold tracking-wide uppercase">Apadrinamientos Listos</span>
             <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-800">
               <FileCheck className="h-5 w-5" />
             </div>
@@ -302,6 +381,399 @@ export default function Dashboard({
           </div>
         </div>
 
+      </div>
+
+      {/* MONITOREO DE ONBOARDING POR ETAPAS (Inducción, 7, 30, 90 días) */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-6">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900 leading-tight">
+            Monitoreo Detallado de Hitos de Onboarding (Inducción, 7, 30 y 90 Días)
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Gestión en tiempo real del progreso de colaboradores en activo. Selecciona una etapa para ver la nómina de completados y pendientes.
+          </p>
+        </div>
+
+        {/* 4 Interactive Cards / Tabs representing the 4 stages */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Induction */}
+          {(() => {
+            const countCompleted = milestonesAnalytics.induction.completed.length;
+            const countInProcess = milestonesAnalytics.induction.inProgress.length;
+            const countOverdue = milestonesAnalytics.induction.overdue.length;
+            const countPending = milestonesAnalytics.induction.pending.length;
+            const countTotal = countCompleted + countInProcess + countOverdue + countPending;
+            const pct = countTotal > 0 ? Math.round((countCompleted / countTotal) * 100) : 0;
+            const isActive = selectedPhase === 'induction';
+
+            return (
+              <div 
+                onClick={() => setSelectedPhase('induction')}
+                className={`p-4.5 rounded-xl border cursor-pointer select-none transition duration-150 relative ${
+                  isActive 
+                    ? 'bg-blue-50/70 border-blue-600 ring-2 ring-blue-600/10' 
+                    : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/55'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className={`text-2xs font-extrabold uppercase tracking-wider ${isActive ? 'text-blue-800' : 'text-slate-400'}`}>
+                    Inducción Básica
+                  </span>
+                  <span className={`text-3xs font-black leading-none px-1.5 py-0.5 rounded ${isActive ? 'bg-blue-200 text-blue-900' : 'bg-slate-100 text-slate-600'}`}>
+                    Día 1
+                  </span>
+                </div>
+                
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 leading-none">{pct}%</span>
+                  <span className="text-3xs font-semibold text-slate-400">Listo</span>
+                </div>
+
+                {/* Micro Progress Bar */}
+                <div className="mt-2.5 w-full bg-slate-100 rounded-full h-1 overflow-hidden flex">
+                  <div className="bg-emerald-500 h-1" style={{ width: `${(countCompleted / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-sky-400 h-1" style={{ width: `${(countInProcess / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-rose-500 h-1" style={{ width: `${(countOverdue / (countTotal || 1)) * 100}%` }} />
+                </div>
+
+                {/* Small counts block */}
+                <div className="mt-3 grid grid-cols-2 gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                    <span>Listos: <strong className="text-slate-800">{countCompleted}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-slate-300 rounded-full" />
+                    <span>Faltan: <strong className="text-slate-800">{countInProcess + countOverdue + countPending}</strong></span>
+                  </div>
+                  {countOverdue > 0 && (
+                    <div className="col-span-2 mt-1 flex items-center gap-1 text-rose-600 font-extrabold text-[10px] uppercase bg-rose-50 px-1.5 py-0.5 rounded">
+                      <span>⚠️ {countOverdue} Vencidos</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Card 2: Day 7 */}
+          {(() => {
+            const countCompleted = milestonesAnalytics.day7.completed.length;
+            const countInProcess = milestonesAnalytics.day7.inProgress.length;
+            const countOverdue = milestonesAnalytics.day7.overdue.length;
+            const countPending = milestonesAnalytics.day7.pending.length;
+            const countTotal = countCompleted + countInProcess + countOverdue + countPending;
+            const pct = countTotal > 0 ? Math.round((countCompleted / countTotal) * 100) : 0;
+            const isActive = selectedPhase === 'day7';
+
+            return (
+              <div 
+                onClick={() => setSelectedPhase('day7')}
+                className={`p-4.5 rounded-xl border cursor-pointer select-none transition duration-150 relative ${
+                  isActive 
+                    ? 'bg-blue-50/70 border-blue-600 ring-2 ring-blue-600/10' 
+                    : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/55'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className={`text-2xs font-extrabold uppercase tracking-wider ${isActive ? 'text-blue-800' : 'text-slate-400'}`}>
+                    Control 7 Días
+                  </span>
+                  <span className={`text-3xs font-black leading-none px-1.5 py-0.5 rounded ${isActive ? 'bg-blue-200 text-blue-900' : 'bg-slate-100 text-slate-600'}`}>
+                    7 Días
+                  </span>
+                </div>
+                
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 leading-none">{pct}%</span>
+                  <span className="text-3xs font-semibold text-slate-400">Listo</span>
+                </div>
+
+                {/* Micro Progress Bar */}
+                <div className="mt-2.5 w-full bg-slate-100 rounded-full h-1 overflow-hidden flex">
+                  <div className="bg-emerald-500 h-1" style={{ width: `${(countCompleted / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-sky-400 h-1" style={{ width: `${(countInProcess / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-rose-500 h-1" style={{ width: `${(countOverdue / (countTotal || 1)) * 100}%` }} />
+                </div>
+
+                {/* Small counts block */}
+                <div className="mt-3 grid grid-cols-2 gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                    <span>Listos: <strong className="text-slate-800">{countCompleted}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-slate-300 rounded-full" />
+                    <span>Faltan: <strong className="text-slate-800">{countInProcess + countOverdue + countPending}</strong></span>
+                  </div>
+                  {countOverdue > 0 && (
+                    <div className="col-span-2 mt-1 flex items-center gap-1 text-rose-600 font-extrabold text-[10px] uppercase bg-rose-50 px-1.5 py-0.5 rounded">
+                      <span>⚠️ {countOverdue} Vencidos</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Card 3: Day 30 */}
+          {(() => {
+            const countCompleted = milestonesAnalytics.day30.completed.length;
+            const countInProcess = milestonesAnalytics.day30.inProgress.length;
+            const countOverdue = milestonesAnalytics.day30.overdue.length;
+            const countPending = milestonesAnalytics.day30.pending.length;
+            const countTotal = countCompleted + countInProcess + countOverdue + countPending;
+            const pct = countTotal > 0 ? Math.round((countCompleted / countTotal) * 100) : 0;
+            const isActive = selectedPhase === 'day30';
+
+            return (
+              <div 
+                onClick={() => setSelectedPhase('day30')}
+                className={`p-4.5 rounded-xl border cursor-pointer select-none transition duration-150 relative ${
+                  isActive 
+                    ? 'bg-blue-50/70 border-blue-600 ring-2 ring-blue-600/10' 
+                    : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/55'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className={`text-2xs font-extrabold uppercase tracking-wider ${isActive ? 'text-blue-800' : 'text-slate-400'}`}>
+                    Control 30 Días
+                  </span>
+                  <span className={`text-3xs font-black leading-none px-1.5 py-0.5 rounded ${isActive ? 'bg-blue-200 text-blue-900' : 'bg-slate-100 text-slate-600'}`}>
+                    30 Días
+                  </span>
+                </div>
+                
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 leading-none">{pct}%</span>
+                  <span className="text-3xs font-semibold text-slate-400">Listo</span>
+                </div>
+
+                {/* Micro Progress Bar */}
+                <div className="mt-2.5 w-full bg-slate-100 rounded-full h-1 overflow-hidden flex">
+                  <div className="bg-emerald-500 h-1" style={{ width: `${(countCompleted / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-sky-400 h-1" style={{ width: `${(countInProcess / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-rose-500 h-1" style={{ width: `${(countOverdue / (countTotal || 1)) * 100}%` }} />
+                </div>
+
+                {/* Small counts block */}
+                <div className="mt-3 grid grid-cols-2 gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                    <span>Listos: <strong className="text-slate-800">{countCompleted}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-slate-300 rounded-full" />
+                    <span>Faltan: <strong className="text-slate-800">{countInProcess + countOverdue + countPending}</strong></span>
+                  </div>
+                  {countOverdue > 0 && (
+                    <div className="col-span-2 mt-1 flex items-center gap-1 text-rose-600 font-extrabold text-[10px] uppercase bg-rose-50 px-1.5 py-0.5 rounded">
+                      <span>⚠️ {countOverdue} Vencidos</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Card 4: Day 90 */}
+          {(() => {
+            const countCompleted = milestonesAnalytics.day90.completed.length;
+            const countInProcess = milestonesAnalytics.day90.inProgress.length;
+            const countOverdue = milestonesAnalytics.day90.overdue.length;
+            const countPending = milestonesAnalytics.day90.pending.length;
+            const countTotal = countCompleted + countInProcess + countOverdue + countPending;
+            const pct = countTotal > 0 ? Math.round((countCompleted / countTotal) * 100) : 0;
+            const isActive = selectedPhase === 'day90';
+
+            return (
+              <div 
+                onClick={() => setSelectedPhase('day90')}
+                className={`p-4.5 rounded-xl border cursor-pointer select-none transition duration-150 relative ${
+                  isActive 
+                    ? 'bg-blue-50/70 border-blue-600 ring-2 ring-blue-600/10' 
+                    : 'bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/55'
+                }`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className={`text-2xs font-extrabold uppercase tracking-wider ${isActive ? 'text-blue-800' : 'text-slate-400'}`}>
+                    Control 90 Días
+                  </span>
+                  <span className={`text-3xs font-black leading-none px-1.5 py-0.5 rounded ${isActive ? 'bg-blue-200 text-blue-900' : 'bg-slate-100 text-slate-600'}`}>
+                    90 Días
+                  </span>
+                </div>
+                
+                <div className="mt-2.5 flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-slate-900 leading-none">{pct}%</span>
+                  <span className="text-3xs font-semibold text-slate-400">Listo</span>
+                </div>
+
+                {/* Micro Progress Bar */}
+                <div className="mt-2.5 w-full bg-slate-100 rounded-full h-1 overflow-hidden flex">
+                  <div className="bg-emerald-500 h-1" style={{ width: `${(countCompleted / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-sky-400 h-1" style={{ width: `${(countInProcess / (countTotal || 1)) * 100}%` }} />
+                  <div className="bg-rose-500 h-1" style={{ width: `${(countOverdue / (countTotal || 1)) * 100}%` }} />
+                </div>
+
+                {/* Small counts block */}
+                <div className="mt-3 grid grid-cols-2 gap-1 text-[11px] font-semibold text-slate-500">
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full" />
+                    <span>Listos: <strong className="text-slate-800">{countCompleted}</strong></span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 bg-slate-300 rounded-full" />
+                    <span>Faltan: <strong className="text-slate-800">{countInProcess + countOverdue + countPending}</strong></span>
+                  </div>
+                  {countOverdue > 0 && (
+                    <div className="col-span-2 mt-1 flex items-center gap-1 text-rose-600 font-extrabold text-[10px] uppercase bg-rose-50 px-1.5 py-0.5 rounded">
+                      <span>⚠️ {countOverdue} Vencidos</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+        </div>
+
+        {/* Selected Stage Detail Panel */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-100/80">
+          
+          {/* COLUMN 1: COMPLETED LIST */}
+          <div className="flex flex-col h-[320px]">
+            <div className="flex justify-between items-center bg-white border border-slate-100 px-4 py-3 rounded-t-xl shrink-0">
+              <span className="text-xs font-extrabold text-slate-650 uppercase tracking-widest flex items-center gap-1.5">
+                <span className="h-2 w-2 bg-emerald-500 rounded-full" />
+                Completados ({milestonesAnalytics[selectedPhase].completed.length})
+              </span>
+              <span className="text-3xs bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
+                Cerrados
+              </span>
+            </div>
+            
+            <div className="bg-white border-x border-b border-slate-100/80 rounded-b-xl p-3 overflow-y-auto flex-grow space-y-2">
+              {milestonesAnalytics[selectedPhase].completed.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                  <HelpCircle className="h-8 w-8 text-slate-350 mb-2" />
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Sin colaboradores listos</p>
+                  <p className="text-[10px] text-slate-400 mt-1">Ningún colaborador ha completado esta fase aún.</p>
+                </div>
+              ) : (
+                milestonesAnalytics[selectedPhase].completed.map(colab => (
+                  <div 
+                    key={colab.id} 
+                    onClick={() => onSelectCollaborator(colab.id)}
+                    className="p-3 bg-white hover:bg-slate-50 rounded-xl border border-slate-100 hover:border-slate-200 transition duration-150 cursor-pointer flex items-center justify-between"
+                  >
+                    <div className="max-w-[75%]">
+                      <h4 className="text-xs font-bold text-slate-800 truncate">{colab.fullName}</h4>
+                      <p className="text-[10px] text-slate-400 mt-0.5 truncate">{colab.role} • {colab.area}</p>
+                      <p className="text-[9px] text-[#065f46] font-semibold bg-emerald-50 border border-emerald-100/60 px-1.5 py-0.5 rounded mt-1 inline-block">
+                        Padrino: {colab.padrinoName || 'N/A'}
+                      </p>
+                    </div>
+                    <span className="text-3xs font-bold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100 font-mono tracking-tight shrink-0">
+                      Listo ✅
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* COLUMN 2: PENDING / PROCESS / OVERDUE LIST */}
+          <div className="flex flex-col h-[320px]">
+            {(() => {
+              const pendingAndInProgress = [
+                ...milestonesAnalytics[selectedPhase].overdue.map(c => ({ ...c, stateType: 'overdue' as const })),
+                ...milestonesAnalytics[selectedPhase].inProgress.map(c => ({ ...c, stateType: 'inProgress' as const })),
+                ...milestonesAnalytics[selectedPhase].pending.map(c => ({ ...c, stateType: 'pending' as const })),
+              ];
+
+              return (
+                <>
+                  <div className="flex justify-between items-center bg-white border border-slate-100 px-4 py-3 rounded-t-xl shrink-0">
+                    <span className="text-xs font-extrabold text-slate-650 uppercase tracking-widest flex items-center gap-1.5">
+                      <span className="h-2 w-2 bg-amber-500 rounded-full animate-pulse" />
+                      Faltantes ({pendingAndInProgress.length})
+                    </span>
+                    {milestonesAnalytics[selectedPhase].overdue.length > 0 && (
+                      <span className="text-3xs bg-rose-50 text-rose-700 font-black px-2 py-0.5 rounded-full animate-bounce">
+                        {milestonesAnalytics[selectedPhase].overdue.length} Vencidos 🚨
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="bg-white border-x border-b border-slate-100/80 rounded-b-xl p-3 overflow-y-auto flex-grow space-y-2">
+                    {pendingAndInProgress.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                        <CheckCircle2 className="h-8 w-8 text-emerald-500 mb-2" />
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700">¡Meta 100% alcanzada!</p>
+                        <p className="text-[10px] text-slate-400 mt-1">Todos los colaboradores activos han cerrado esta etapa.</p>
+                      </div>
+                    ) : (
+                      pendingAndInProgress.map(colab => {
+                        const mObj = selectedPhase === 'induction' 
+                          ? colab.induction 
+                          : selectedPhase === 'day7' 
+                          ? colab.day7 
+                          : selectedPhase === 'day30' 
+                          ? colab.day30 
+                          : colab.day90;
+                        const diff = getDiffInDays(mObj?.scheduledDate || colab.entryDate, SIM_DATE);
+
+                        return (
+                          <div 
+                            key={colab.id} 
+                            onClick={() => onSelectCollaborator(colab.id)}
+                            className={`p-3 rounded-xl border transition duration-150 cursor-pointer flex items-center justify-between ${
+                              colab.stateType === 'overdue' 
+                                ? 'bg-rose-50/30 hover:bg-rose-50 border-rose-100/80 hover:border-rose-200' 
+                                : 'bg-white hover:bg-slate-55 border-slate-100 hover:border-slate-200'
+                            }`}
+                          >
+                            <div className="max-w-[65%]">
+                              <h4 className="text-xs font-bold text-slate-800 truncate">{colab.fullName}</h4>
+                              <p className="text-[10px] text-slate-400 mt-0.5 truncate">{colab.role} • {colab.area}</p>
+                              <div className="flex gap-1.5 flex-wrap items-center mt-1">
+                                <span className="text-[9px] text-slate-600 bg-slate-100 font-semibold px-1.5 py-0.2 rounded">
+                                  Boss: {colab.immediateBoss || 'N/A'}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-mono">
+                                  Meta: {mObj?.scheduledDate}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="text-right shrink-0">
+                              {colab.stateType === 'overdue' ? (
+                                <span className="text-3xs font-extrabold text-rose-750 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md animate-pulse">
+                                  VENCIDO ({Math.abs(diff)} d)
+                                </span>
+                              ) : colab.stateType === 'inProgress' ? (
+                                <span className="text-3xs font-extrabold text-sky-850 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-md">
+                                  En proceso
+                                </span>
+                              ) : (
+                                <span className="text-3xs font-medium text-slate-600 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-md">
+                                  Faltan {diff} d
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+        </div>
       </div>
 
       {/* Main Grid: Alerts Hub and Interactive List */}
@@ -466,7 +938,7 @@ export default function Dashboard({
                       itemStyle={{ color: '#fff', fontSize: '12px' }}
                     />
                     <Legend wrapperStyle={{ fontSize: '11px' }} />
-                    <Bar dataKey="Padrinamientos Totales" fill="#1e3a8a" name="Totales" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Apadrinamientos Totales" fill="#1e3a8a" name="Totales" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Onboardings Cerrados" fill="#eab308" name="Completados (100%)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

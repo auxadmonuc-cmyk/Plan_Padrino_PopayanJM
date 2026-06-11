@@ -11,6 +11,7 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   email: string;
+  password?: string;
 }
 
 export type CollaboratorStatus = 'Activo' | 'Retirado';

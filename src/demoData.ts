@@ -8,7 +8,8 @@ export const DEFAULT_USERS: User[] = [
     fullName: 'Administrador de Talento Humano',
     role: 'Administrador',
     isActive: true,
-    email: 'admin.th@empresa.com'
+    email: 'admin.th@empresa.com',
+    password: 'admin'
   },
   {
     id: 'u2',
@@ -16,7 +17,8 @@ export const DEFAULT_USERS: User[] = [
     fullName: 'Consulta de Talento Humano',
     role: 'Consulta',
     isActive: true,
-    email: 'consulta.th@empresa.com'
+    email: 'consulta.th@empresa.com',
+    password: 'consulta'
   }
 ];
 

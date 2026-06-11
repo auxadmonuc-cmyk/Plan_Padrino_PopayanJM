@@ -20,6 +20,7 @@ export default function UsersConfig({
   const [newFullName, setNewFullName] = useState('');
   const [newRole, setNewRole] = useState<UserRole>('Consulta');
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   
   const isAdmin = loggedInUser.role === 'Administrador';
 
@@ -27,8 +28,13 @@ export default function UsersConfig({
     e.preventDefault();
     if (!isAdmin) return;
 
-    if (!newUsername.trim() || !newFullName.trim() || !newEmail.trim()) {
-      alert('Por favor complete todos los datos.');
+    if (!newUsername.trim() || !newFullName.trim() || !newEmail.trim() || !newPassword.trim()) {
+      alert('Por favor complete todos los datos incluyendo la contraseña.');
+      return;
+    }
+
+    if (newPassword.trim().length < 4) {
+      alert('La contraseña debe tener al menos 4 caracteres.');
       return;
     }
 
@@ -43,7 +49,8 @@ export default function UsersConfig({
       fullName: newFullName.trim(),
       role: newRole,
       isActive: true,
-      email: newEmail.trim()
+      email: newEmail.trim(),
+      password: newPassword.trim()
     };
 
     onAddUser(newUser);
@@ -53,6 +60,7 @@ export default function UsersConfig({
     setNewFullName('');
     setNewRole('Consulta');
     setNewEmail('');
+    setNewPassword('');
 
     alert(`Usuario administrativo "${newUser.fullName}" creado con éxito.`);
   };
@@ -113,6 +121,19 @@ export default function UsersConfig({
                 />
               </div>
 
+              {/* Password */}
+              <div>
+                <label className="block text-3xs font-extrabold uppercase tracking-widest text-slate-500 mb-1">Contraseña de Acceso *</label>
+                <input
+                  type="text"
+                  required
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="ej: miContrasegna123"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-lg p-2 text-xs focus:ring-blue-800 focus:border-blue-800 font-mono"
+                />
+              </div>
+
               {/* Role select */}
               <div>
                 <label className="block text-3xs font-extrabold uppercase tracking-widest text-slate-500 mb-1">Rol y Permisos del Sistema *</label>
@@ -164,6 +185,7 @@ export default function UsersConfig({
                 <tr>
                   <th className="px-5 py-3">Nombre Completo</th>
                   <th className="px-5 py-3">Usuario Log In</th>
+                  <th className="px-5 py-3">Contraseña</th>
                   <th className="px-5 py-3">Rol del Sistema</th>
                   <th className="px-5 py-3">Estado</th>
                   {isAdmin && <th className="px-5 py-3 text-right">Operaciones</th>}
@@ -195,6 +217,9 @@ export default function UsersConfig({
                             Actual
                           </span>
                         )}
+                      </td>
+                      <td className="px-5 py-3.5 font-mono text-xs text-slate-600">
+                        {u.password || <span className="text-slate-300 italic">Por defecto</span>}
                       </td>
                       <td className="px-5 py-3.5">
                         <span className={`inline-flex px-2 py-0.5 rounded text-3xs font-extrabold uppercase ${

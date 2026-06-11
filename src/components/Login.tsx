@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { LogIn, Key, User as UserIcon, ShieldAlert } from 'lucide-react';
 import { DEFAULT_USERS } from '../demoData';
 import { User } from '../types';
+import Logo from './Logo';
 
 interface LoginProps {
   onLoginSuccess: (user: User) => void;
+  usersList: User[];
 }
 
-export default function Login({ onLoginSuccess }: LoginProps) {
+export default function Login({ onLoginSuccess, usersList = [] }: LoginProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,30 +23,26 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       return;
     }
 
-    // Authenticate with default users
-    // For demo purposes:
-    // admin / admin
-    // consulta / consulta
-    // Or we also lookup standard passwords
-    const user = DEFAULT_USERS.find(
+    // Authenticate with both dynamic usersList and falling back to default users
+    const user = (usersList && usersList.find(
+      u => u.username.toLowerCase() === username.toLowerCase().trim()
+    )) || DEFAULT_USERS.find(
       u => u.username.toLowerCase() === username.toLowerCase().trim()
     );
 
-    if (user && (password === 'admin' || password === 'consulta' || password === 'admin123' || password === 'consulta123')) {
-      // Direct pass based on usernames: admin has role Administrador, consulta has role Consulta
-      if (user.username === 'admin' && (password === 'admin' || password === 'admin123')) {
-        onLoginSuccess(user);
-      } else if (user.username === 'consulta' && (password === 'consulta' || password === 'consulta123')) {
+    if (user) {
+      const isPasswordCorrect = user.password 
+        ? password === user.password 
+        : (user.username === 'admin' && (password === 'admin' || password === 'admin123')) ||
+          (user.username === 'consulta' && (password === 'consulta' || password === 'consulta123'));
+          
+      if (isPasswordCorrect) {
         onLoginSuccess(user);
       } else {
-        setError('Contraseña incorrecta para el rol seleccionado.');
+        setError('Contraseña incorrecta para el usuario ingresado.');
       }
-    } else if ((username === 'admin' && password === 'admin') || (username === 'admin' && password === 'admin123')) {
-      onLoginSuccess(DEFAULT_USERS[0]);
-    } else if ((username === 'consulta' && password === 'consulta') || (username === 'consulta' && password === 'consulta123')) {
-      onLoginSuccess(DEFAULT_USERS[1]);
     } else {
-      setError('Usuario o contraseña incorrectos. Intenta con "admin" o "consulta".');
+      setError('Usuario incorrecto o no registrado en el sistema.');
     }
   };
 
@@ -57,13 +55,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 px-4">
         {/* Logo/Badge */}
         <div className="flex justify-center">
-          <div className="h-16 w-16 bg-gradient-to-tr from-blue-700 to-amber-500 rounded-2xl flex items-center justify-center shadow-xl border border-blue-600/30">
-            <LogIn className="h-8 w-8 text-white" />
-          </div>
+          <Logo variant="dark" className="scale-125 transform" />
         </div>
 
-        <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-white font-sans">
-          Gestión de Padrinamiento
+        <h2 className="mt-8 text-center text-3xl font-extrabold tracking-tight text-white font-sans">
+          Gestión de Apadrinamiento
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
           U. de Talento Humano — Onboarding 7, 30 y 90 Días
@@ -148,6 +144,9 @@ export default function Login({ onLoginSuccess }: LoginProps) {
                 <span>Contraseña: <strong className="text-slate-200">consulta</strong></span>
               </div>
             </div>
+            <span className="text-[10px] text-slate-500 block mt-3.5 italic leading-relaxed">
+              * El sistema también permite crear nuevos operadores en el módulo de "Usuarios" e ingresar al instante con su nombre de usuario y contraseña creados.
+            </span>
           </div>
         </div>
       </div>

@@ -286,7 +286,7 @@ export default function ReportGenerator({
             Centro de Reportes y Descargas
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Generación de planillas estructuradas de cumplimiento de padrinamiento, análisis demográfico y alertas de vencimiento por áreas.
+            Generación de planillas estructuradas de cumplimiento de apadrinamiento, análisis demográfico y alertas de vencimiento por áreas.
           </p>
         </div>
         
@@ -330,7 +330,7 @@ export default function ReportGenerator({
           >
             <Award className={`h-4.5 w-4.5 ${selectedReport === 'cumplimiento' ? 'text-amber-400' : 'text-slate-400'}`} />
             <div>
-              <span>Cumplimiento Padrinamiento</span>
+              <span>Cumplimiento Apadrinamiento</span>
               <p className={`text-[10px] font-medium block mt-0.5 ${selectedReport === 'cumplimiento' ? 'text-blue-200' : 'text-slate-400'}`}>
                 Avance global de colaboradores
               </p>
@@ -441,7 +441,7 @@ export default function ReportGenerator({
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5 pb-4 border-b border-slate-100">
             <div>
               <h3 className="text-sm font-extrabold uppercase tracking-widest text-slate-500">
-                {selectedReport === 'cumplimiento' && 'Vista Previa: Cumplimiento Padrinamiento'}
+                {selectedReport === 'cumplimiento' && 'Vista Previa: Cumplimiento Apadrinamiento'}
                 {selectedReport === 'vencidos' && 'Vista Previa: Actividades Retrasadas y Alertas'}
                 {selectedReport === 'seguimientos_realizados' && 'Vista Previa: Seguimientos Realizados Exitosos'}
                 {selectedReport === 'avance_area' && 'Vista Previa: Acumulado por Áreas'}
