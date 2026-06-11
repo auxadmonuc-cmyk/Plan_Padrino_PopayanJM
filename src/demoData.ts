@@ -134,4 +134,3 @@ export function getMilestoneStatusColor(status: MilestoneStatus, scheduledDate: 
     };
   }
 }
-

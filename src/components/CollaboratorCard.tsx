@@ -29,7 +29,7 @@ import {
   Check,
   X
 } from 'lucide-react';
-import { Collaborator, Milestone, MilestoneStatus, FileType, Evidence, UserRole, CollaboratorStatus } from '../types';
+import { Collaborator, Milestone, MilestoneStatus, FileType, Evidence, UserRole, CollaboratorStatus, Padrino } from '../types';
 import { getDiffInDays, getMilestoneStatusColor } from '../demoData';
 
 interface CollaboratorCardProps {
@@ -38,6 +38,7 @@ interface CollaboratorCardProps {
   onBack: () => void;
   onUpdateCollaborator: (updated: Collaborator) => void;
   onLogAudit: (action: string, target: string, details: string) => void;
+  padrinosList: Padrino[];
 }
 
 export default function CollaboratorCard({
@@ -45,7 +46,8 @@ export default function CollaboratorCard({
   userRole,
   onBack,
   onUpdateCollaborator,
-  onLogAudit
+  onLogAudit,
+  padrinosList
 }: CollaboratorCardProps) {
   
   const isAdmin = userRole === 'Administrador';
@@ -63,6 +65,7 @@ export default function CollaboratorCard({
   const [editPhone, setEditPhone] = useState(collaborator.phone);
   const [editStatus, setEditStatus] = useState<CollaboratorStatus>(collaborator.status);
   const [editAvatar, setEditAvatar] = useState(collaborator.avatar || '');
+  const [editPadrinoId, setEditPadrinoId] = useState(collaborator.padrinoId || '');
 
   // Selected Milestone for Details / Upload (induction, 7 days, 30 days, 90 days)
   const [selectedTab, setSelectedTab] = useState<'induction' | 'day7' | 'day30' | 'day90'>('induction');
@@ -121,6 +124,8 @@ export default function CollaboratorCard({
       return;
     }
 
+    const matchedPadrino = padrinosList.find(p => p.id === editPadrinoId);
+
     const updatedColab: Collaborator = {
       ...collaborator,
       fullName: editFullName.trim(),
@@ -132,7 +137,9 @@ export default function CollaboratorCard({
       immediateBoss: editBoss,
       email: editEmail.trim(),
       phone: editPhone.trim(),
-      status: editStatus
+      status: editStatus,
+      padrinoId: editPadrinoId || undefined,
+      padrinoName: matchedPadrino ? matchedPadrino.fullName : undefined
     };
 
     onUpdateCollaborator(updatedColab);
@@ -443,6 +450,15 @@ export default function CollaboratorCard({
                     </div>
                   </div>
 
+                  {/* Padrino de Seguimiento */}
+                  <div className="flex items-start gap-2.5 bg-blue-900/40 p-2.5 rounded-xl border border-blue-800/60">
+                    <User className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-3xs text-amber-400 block font-bold uppercase">Padrino de Seguimiento</span>
+                      <span className="text-slate-100 font-bold">{collaborator.padrinoName || 'Sin padrino asignado'}</span>
+                    </div>
+                  </div>
+
                 </div>
 
                 {isAdmin ? (
@@ -459,6 +475,7 @@ export default function CollaboratorCard({
                       setEditPhone(collaborator.phone);
                       setEditStatus(collaborator.status);
                       setEditAvatar(collaborator.avatar || '');
+                      setEditPadrinoId(collaborator.padrinoId || '');
                       setIsEditMode(true);
                     }}
                     className="w-full mt-4 flex items-center justify-center gap-1.5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition active:scale-95"
@@ -611,6 +628,25 @@ export default function CollaboratorCard({
                   >
                     <option value="Activo">Activo</option>
                     <option value="Retirado">Retirado / Desvinculado</option>
+                  </select>
+                </div>
+
+                {/* Selección de Padrino */}
+                <div>
+                  <label className="text-3xs text-[#2F5D73] font-black block uppercase mb-1">
+                    Padrino / Mentor de Seguimiento *
+                  </label>
+                  <select
+                    value={editPadrinoId}
+                    onChange={e => setEditPadrinoId(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-1.5 text-xs focus:ring-amber-500 font-bold"
+                  >
+                    <option value="">-- Sin padrino / seleccionar uno --</option>
+                    {padrinosList && padrinosList.filter(p => p.isActive).map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.fullName} ({p.role} - {p.company})
+                      </option>
+                    ))}
                   </select>
                 </div>
 

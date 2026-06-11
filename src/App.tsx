@@ -11,9 +11,10 @@ import {
   ShieldCheck,
   Building,
   Menu,
-  X
+  X,
+  Award
 } from 'lucide-react';
-import { User, Collaborator, AuditLog, UserRole, Alert } from './types';
+import { User, Collaborator, AuditLog, UserRole, Alert, Padrino } from './types';
 import { 
   INITIAL_COLLABORATORS, 
   DEFAULT_USERS, 
@@ -27,6 +28,7 @@ import CollaboratorCard from './components/CollaboratorCard';
 import ReportGenerator from './components/ReportGenerator';
 import AuditHistory from './components/AuditHistory';
 import UsersConfig from './components/UsersConfig';
+import PadrinosConfig from './components/PadrinosConfig';
 
 // Import Firestore client & utilities
 import { collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from 'firebase/firestore';
@@ -39,12 +41,14 @@ export default function App() {
   const LOG_KEY = 'padrinamiento_logs';
   const USERS_KEY = 'padrinamiento_users';
   const ACTIVE_USER_KEY = 'padrinamiento_active_user';
+  const PADRINOS_KEY = 'padrinamiento_padrinos';
 
   // State elements
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [usersList, setUsersList] = useState<User[]>([]);
+  const [padrinosList, setPadrinosList] = useState<Padrino[]>([]);
 
   // Navigation and routing state
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -79,6 +83,11 @@ export default function App() {
     localStorage.setItem(LOG_KEY, JSON.stringify(updatedLogs));
   };
 
+  const handleUpdatePadrinos = (updatedPadrinos: Padrino[]) => {
+    setPadrinosList(updatedPadrinos);
+    localStorage.setItem(PADRINOS_KEY, JSON.stringify(updatedPadrinos));
+  };
+
   // Attempt to seed data into Firestore initially if collections are completely empty
   const seedFirestoreIfEmpty = async () => {
     try {
@@ -103,6 +112,38 @@ export default function App() {
         console.log('Database empty. Seeding INITIAL_AUDIT_LOGS to Firestore...');
         for (const item of INITIAL_AUDIT_LOGS) {
           await setDoc(doc(db, 'auditLogs', item.id), item);
+        }
+      }
+
+      const padrinoSnap = await getDocs(collection(db, 'padrinos'));
+      if (padrinoSnap.empty) {
+        console.log('Database empty. Seeding INITIAL_PADRINOS to Firestore...');
+        const initialPadrinos: Padrino[] = [
+          {
+            id: '9001',
+            documentId: '1017543210',
+            fullName: 'Ricardo Alzate',
+            role: 'Director de TI & Desarrollo',
+            area: 'Tecnología',
+            company: 'Zura Group',
+            email: 'ricardo.alzate@zuragroup.com',
+            phone: '3157894561',
+            isActive: true
+          },
+          {
+            id: '9002',
+            documentId: '987654322',
+            fullName: 'Martha Cecilia Ramos',
+            role: 'Gerente de Gestión Humana',
+            area: 'Administrativo',
+            company: 'Soivalle Soluciones Inteligentes del Valle',
+            email: 'martha.ramos@soivalle.com',
+            phone: '3124567890',
+            isActive: true
+          }
+        ];
+        for (const item of initialPadrinos) {
+          await setDoc(doc(db, 'padrinos', item.id), item);
         }
       }
     } catch (err) {
@@ -142,6 +183,11 @@ export default function App() {
       try { setUsersList(JSON.parse(storedUsers)); } catch (e) {}
     } else {
       setUsersList(DEFAULT_USERS);
+    }
+
+    const storedPadrinos = localStorage.getItem(PADRINOS_KEY);
+    if (storedPadrinos) {
+      try { setPadrinosList(JSON.parse(storedPadrinos)); } catch (e) {}
     }
 
     // Trigger asynchronous firestore seed checks
@@ -187,10 +233,23 @@ export default function App() {
       console.warn('Readying offline Firestore; audits streaming paused: ', error);
     });
 
+    const unsubscribePadrinos = onSnapshot(collection(db, 'padrinos'), (snapshot) => {
+      const padrinosData: Padrino[] = [];
+      snapshot.forEach((doc) => {
+        padrinosData.push(doc.data() as Padrino);
+      });
+      if (padrinosData.length > 0) {
+        handleUpdatePadrinos(padrinosData);
+      }
+    }, (error) => {
+      console.warn('Readying offline Firestore; padrinos streaming paused: ', error);
+    });
+
     return () => {
       unsubscribeColabs();
       unsubscribeUsers();
       unsubscribeLogs();
+      unsubscribePadrinos();
     };
   }, []);
 
@@ -288,6 +347,45 @@ export default function App() {
       await deleteDoc(doc(db, 'users', userId));
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${userId}`);
+    }
+  };
+
+  // Operations: Padrinos Config
+  const handleAddPadrino = async (newPadrino: Padrino) => {
+    const updated = [...padrinosList, newPadrino];
+    handleUpdatePadrinos(updated);
+    addToast(`¡Padrino ${newPadrino.fullName} creado!`, 'success');
+    appendAuditLog('Alta de padrino/mentor', newPadrino.fullName, `Creación del tutor de onboarding. Cargo: ${newPadrino.role}`);
+    try {
+      await setDoc(doc(db, 'padrinos', newPadrino.id), newPadrino);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `padrinos/${newPadrino.id}`);
+    }
+  };
+
+  const handleUpdatePadrino = async (updatedPadrino: Padrino) => {
+    const updated = padrinosList.map(p => p.id === updatedPadrino.id ? updatedPadrino : p);
+    handleUpdatePadrinos(updated);
+    addToast(`¡Se actualizó el padrino ${updatedPadrino.fullName}!`, 'success');
+    appendAuditLog('Actualización de padrino', updatedPadrino.fullName, `Modificación de ficha del mentor/vínculo.`);
+    try {
+      await setDoc(doc(db, 'padrinos', updatedPadrino.id), updatedPadrino);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `padrinos/${updatedPadrino.id}`);
+    }
+  };
+
+  const handleDeletePadrino = async (padrinoId: string) => {
+    const padrino = padrinosList.find(p => p.id === padrinoId);
+    if (!padrino) return;
+    const updated = padrinosList.filter(p => p.id !== padrinoId);
+    handleUpdatePadrinos(updated);
+    addToast(`¡Padrino ${padrino.fullName} eliminado!`, 'info');
+    appendAuditLog('Eliminación de padrino', padrino.fullName, `Baja definitiva del mentor del sistema.`);
+    try {
+      await deleteDoc(doc(db, 'padrinos', padrinoId));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `padrinos/${padrinoId}`);
     }
   };
 
@@ -405,6 +503,19 @@ export default function App() {
               >
                 <Settings className="h-4 w-4" />
                 Usuarios
+              </button>
+
+              <button
+                id="tab_padrinos"
+                onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); }}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                  activeTab === 'padrinos'
+                    ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
+                }`}
+              >
+                <Award className="h-4 w-4" />
+                Padrinos / Mentores
               </button>
             </nav>
 
@@ -583,6 +694,14 @@ export default function App() {
             >
               Usuarios
             </button>
+            <button
+              onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); setIsMobileMenuOpen(false); }}
+              className={`w-full text-left p-2 px-3 rounded-lg text-xs font-bold block ${
+                activeTab === 'padrinos' ? 'bg-blue-900 text-amber-400' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              Padrinos
+            </button>
           </div>
         )}
       </header>
@@ -606,6 +725,7 @@ export default function App() {
             onAddCollaborator={handleAddCollaborator}
             onSelectCollaborator={handleSelectCollaborator}
             onLogAudit={(act, tar, det) => appendAuditLog(act, tar, det)}
+            padrinosList={padrinosList}
           />
         )}
 
@@ -616,6 +736,7 @@ export default function App() {
             onBack={() => { setSelectedColabId(null); setActiveTab('colaboradores'); }}
             onUpdateCollaborator={handleUpdateSingleCollaborator}
             onLogAudit={(act, tar, det) => appendAuditLog(act, tar, det)}
+            padrinosList={padrinosList}
           />
         )}
 
@@ -639,6 +760,16 @@ export default function App() {
             loggedInUser={currentUser}
             onAddUser={handleAddUser}
             onDeleteUser={handleDeleteUser}
+          />
+        )}
+
+        {activeTab === 'padrinos' && (
+          <PadrinosConfig 
+            padrinosList={padrinosList}
+            loggedInUser={currentUser}
+            onAddPadrino={handleAddPadrino}
+            onUpdatePadrino={handleUpdatePadrino}
+            onDeletePadrino={handleDeletePadrino}
           />
         )}
 

@@ -55,6 +55,20 @@ export interface Collaborator {
   day7: Milestone;
   day30: Milestone;
   day90: Milestone;
+  padrinoId?: string; // ID del padrino encargado
+  padrinoName?: string; // Nombre del padrino encargado
+}
+
+export interface Padrino {
+  id: string;
+  documentId: string;
+  fullName: string;
+  role: string;
+  area: string;
+  company: string;
+  email: string;
+  phone: string;
+  isActive: boolean;
 }
 
 export interface AuditLog {

@@ -15,7 +15,7 @@ import {
   MapPin,
   Check
 } from 'lucide-react';
-import { Collaborator, CollaboratorStatus, UserRole } from '../types';
+import { Collaborator, CollaboratorStatus, UserRole, Padrino } from '../types';
 import { getDiffInDays } from '../demoData';
 
 interface CollaboratorsListProps {
@@ -24,6 +24,7 @@ interface CollaboratorsListProps {
   onAddCollaborator: (colab: Collaborator) => void;
   onSelectCollaborator: (id: string) => void;
   onLogAudit: (action: string, target: string, details: string) => void;
+  padrinosList: Padrino[];
 }
 
 export default function CollaboratorsList({
@@ -31,7 +32,8 @@ export default function CollaboratorsList({
   userRole,
   onAddCollaborator,
   onSelectCollaborator,
-  onLogAudit
+  onLogAudit,
+  padrinosList
 }: CollaboratorsListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterArea, setFilterArea] = useState('Todas');
@@ -52,6 +54,7 @@ export default function CollaboratorsList({
   const [entryDate, setEntryDate] = useState('2026-06-06');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [selectedPadrinoId, setSelectedPadrinoId] = useState('');
 
   // Date Configuration (Configurar fechas 7, 30, 90 días)
   const [date7, setDate7] = useState('');
@@ -122,6 +125,7 @@ export default function CollaboratorsList({
     setPhone('');
     calculateProjectedDates('2026-06-06');
     setIsDatesOverridden(false);
+    setSelectedPadrinoId('');
     setIsModalOpen(true);
   };
 
@@ -142,6 +146,8 @@ export default function CollaboratorsList({
       return;
     }
 
+    const matchedPadrino = padrinosList.find(p => p.id === selectedPadrinoId);
+
     const newColab: Collaborator = {
       id: docId.trim(),
       documentId: docId.trim(),
@@ -156,6 +162,8 @@ export default function CollaboratorsList({
       email: email.trim() || `${fullName.trim().toLowerCase().replace(/\s+/g, '.')}@empresa.com`,
       phone: phone.trim() || '3000000000',
       status: 'Activo',
+      padrinoId: selectedPadrinoId || undefined,
+      padrinoName: matchedPadrino ? matchedPadrino.fullName : undefined,
       induction: {
         scheduledDate: entryDate,
         status: 'Pendiente',
@@ -322,7 +330,7 @@ export default function CollaboratorsList({
                   <th className="px-6 py-4">Ficha Técnica</th>
                   <th className="px-6 py-4">Contacto institucional</th>
                   <th className="px-6 py-4">Ingreso</th>
-                  <th className="px-6 py-4">Líder Directo</th>
+                  <th className="px-6 py-4">Líder / Padrino</th>
                   <th className="px-6 py-4">Hitos Onboarding</th>
                   <th className="px-6 py-4 text-center">Estado</th>
                   <th className="px-6 py-4 text-right rounded-r-lg">Acción</th>
@@ -376,12 +384,16 @@ export default function CollaboratorsList({
                         <span className="text-3xs text-slate-400 block mt-0.5">
                           {colab.status === 'Activo' 
                             ? `Hace ${daysPassed} días` 
-                            : 'Retirado'
+                             : 'Retirado'
                           }
                         </span>
                       </td>
-                      <td className="px-6 py-4.5 text-xs font-medium text-slate-600">
-                        {colab.immediateBoss}
+                      <td className="px-6 py-4.5 text-xs text-slate-600">
+                        <div className="font-bold text-slate-800">{colab.immediateBoss}</div>
+                        <div className="text-3xs text-blue-900 mt-1 font-semibold flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+                          {colab.padrinoName ? `Pad: ${colab.padrinoName}` : 'Padrino: Sin asignar'}
+                        </div>
                       </td>
                       <td className="px-6 py-4.5">
                         <div className="flex items-center gap-1.5">
@@ -628,6 +640,30 @@ export default function CollaboratorsList({
                       placeholder="Ej: 3004561234"
                       className="mt-1 block w-full rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs focus:ring-blue-800 focus:border-blue-800"
                     />
+                  </div>
+
+                  {/* Padrino / Sponsor Asignado */}
+                  <div className="sm:col-span-2 bg-[#2F5D73]/5 p-3.5 rounded-xl border border-[#2F5D73]/20">
+                    <label className="block text-3xs font-extrabold text-[#2F5D73] uppercase tracking-wider mb-1">
+                      Padrino / Mentor de Seguimiento *
+                    </label>
+                    <select
+                      value={selectedPadrinoId}
+                      onChange={e => setSelectedPadrinoId(e.target.value)}
+                      className="block w-full rounded-lg border border-[#2F5D73]/30 bg-white p-2 text-xs focus:ring-[#2F5D73] focus:border-[#2F5D73] font-bold text-slate-800"
+                    >
+                      <option value="">-- Seleccionar un Padrino / Mentor para el colaborador --</option>
+                      {padrinosList && padrinosList.filter(p => p.isActive).map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.fullName} ({p.role} - {p.company})
+                        </option>
+                      ))}
+                    </select>
+                    {padrinosList && padrinosList.filter(p => p.isActive).length === 0 && (
+                      <p className="text-[10px] text-amber-600 font-semibold mt-1">
+                        ⚠️ No hay padrinos activos registrados en el sistema. Vaya a la pestaña de "Padrinos / Mentores" para crear uno primero.
+                      </p>
+                    )}
                   </div>
 
                 </div>
