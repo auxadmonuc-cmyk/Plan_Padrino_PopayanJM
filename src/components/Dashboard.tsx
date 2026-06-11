@@ -294,6 +294,44 @@ export default function Dashboard({
         </div>
       </div>
 
+      {/* Power BI Dashboard Embedding */}
+      <div id="powerbi_dashboard_container" className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs space-y-4 animate-fade-in">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <span className="p-1.5 bg-amber-500/10 text-amber-600 rounded-lg shrink-0">
+                <TrendingUp className="h-4.5 w-4.5" />
+              </span>
+              Reporte de Analítica Interactivo (Power BI)
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Indicadores clave de gestión, métricas del ecosistema de apadrinados y avance estratégico global.
+            </p>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <a 
+              href="https://app.powerbi.com/view?r=eyJrIjoiOWVjMjJhN2QtOTdkZS00YjdmLWJlMzYtZTdjNTVlOGUyMTE4IiwidCI6ImU5ODZiM2MyLTMzYjktNDc1NC04ZDRjLWI4M2Y3ZjdhZmJjMSIsImMiOjR9"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-3xs font-black uppercase tracking-wider text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+            >
+              <span>Abrir en nueva pestaña</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <div className="relative w-full rounded-2xl overflow-hidden border border-slate-150 bg-slate-50 shadow-inner flex flex-col" style={{ minHeight: '520px' }}>
+          {/* Active Iframe container */}
+          <iframe 
+            title="Monitoreo y Control de Apadrinamiento" 
+            src="https://app.powerbi.com/view?r=eyJrIjoiOWVjMjJhN2QtOTdkZS00YjdmLWJlMzYtZTdjNTVlOGUyMTE4IiwidCI6ImU5ODZiM2MyLTMzYjktNDc1NC04ZDRjLWI4M2Y3ZjdhZmJjMSIsImMiOjR9"
+            className="w-full h-[520px] border-0" 
+            allowFullScreen={true}
+          />
+        </div>
+      </div>
+
       {/* Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
         

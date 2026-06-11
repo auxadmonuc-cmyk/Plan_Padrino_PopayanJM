@@ -88,6 +88,9 @@ export default function CollaboratorCard({
   const [isUploading, setIsUploading] = useState(false);
   const [previewEvidence, setPreviewEvidence] = useState<Evidence | null>(null);
 
+  // Selected image and name for full visualizer modal popup
+  const [selectedImageModal, setSelectedImageModal] = useState<{ url: string; name: string } | null>(null);
+
   // Sync state when tab changes
   React.useEffect(() => {
     setMilestoneStatus(currentMilestone.status);
@@ -356,11 +359,13 @@ export default function CollaboratorCard({
               <div className="space-y-6 relative z-10">
                 <div className="flex gap-4 items-start justify-between">
                   <div className="flex gap-3.5 items-center">
-                    {collaborator.avatar ? (
+                     {collaborator.avatar ? (
                       <img 
                         src={collaborator.avatar} 
                         alt={collaborator.fullName}
-                        className="h-14 w-14 rounded-full object-cover border-2 border-[#2F5D73] shadow-md shrink-0"
+                        className="h-14 w-14 rounded-full object-cover border-2 border-[#2F5D73] shadow-md shrink-0 cursor-pointer hover:scale-115 hover:border-amber-400 transition-all duration-150"
+                        title="Haga clic para ampliar foto de perfil"
+                        onClick={() => setSelectedImageModal({ url: collaborator.avatar!, name: collaborator.fullName })}
                       />
                     ) : (
                       <div className="h-14 w-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-white font-extrabold text-sm uppercase font-sans shrink-0">
@@ -1327,6 +1332,62 @@ export default function CollaboratorCard({
           </div>
         </div>
       )}
+
+      {/* Photo Viewer Modal */}
+      {selectedImageModal && (
+        <div 
+          id="colab-photo-viewer-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in transition-all duration-300"
+          onClick={() => setSelectedImageModal(null)}
+        >
+          <div 
+            className="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center p-6 transition-all transform scale-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="w-full flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+              <h4 className="text-xs font-black text-slate-100 flex items-center gap-2">
+                <User className="h-4 w-4 text-[#2F5D73]" />
+                Visualizador de Perfil (Colaborador)
+              </h4>
+              <button
+                type="button"
+                onClick={() => setSelectedImageModal(null)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                title="Cerrar Visualizador"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Portrait frame */}
+            <div className="relative w-64 h-64 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center shadow-inner">
+              <img 
+                src={selectedImageModal.url} 
+                className="w-full h-full object-cover" 
+                alt={selectedImageModal.name} 
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            {/* Caption name */}
+            <div className="mt-4 text-center">
+              <p className="text-xs font-black text-white">{selectedImageModal.name}</p>
+              <p className="text-3xs text-[#2F5D73] font-bold uppercase tracking-widest mt-1">Colaborador en Proceso de Apadrinamiento</p>
+            </div>
+            
+            {/* Bottom Close Button */}
+            <button
+              type="button"
+              onClick={() => setSelectedImageModal(null)}
+              className="mt-6 w-full py-2 bg-[#2F5D73] hover:bg-[#1F2A33] text-white font-extrabold text-3xs uppercase tracking-widest rounded-xl transition"
+            >
+              Cerrar Vista
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

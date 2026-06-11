@@ -63,14 +63,6 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(JSON.stringify(errInfo));
 }
 
-// Test connection on boot according to skill guidelines
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test-connection-probe', 'connection'));
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration or network status.", error);
-    }
-  }
-}
-testConnection();
+
+// Firebase is initialized. Standard firestore offline capabilities are enabled by default.
+

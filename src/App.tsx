@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Users, 
   FileBarChart2, 
-  History, 
   Settings, 
   User as UserIcon, 
   Bell, 
@@ -26,7 +25,6 @@ import Dashboard from './components/Dashboard';
 import CollaboratorsList from './components/CollaboratorsList';
 import CollaboratorCard from './components/CollaboratorCard';
 import ReportGenerator from './components/ReportGenerator';
-import AuditHistory from './components/AuditHistory';
 import UsersConfig from './components/UsersConfig';
 import PadrinosConfig from './components/PadrinosConfig';
 import Logo from './components/Logo';
@@ -469,6 +467,20 @@ export default function App() {
               </button>
 
               <button
+                id="tab_padrinos"
+                onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); }}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
+                  activeTab === 'padrinos'
+                    ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
+                }`}
+                title="Configuración de Padrinos"
+              >
+                <Award className="h-4 w-4 shrink-0" />
+                <span className="hidden lg:inline">Padrinos</span>
+              </button>
+
+              <button
                 id="tab_reportes"
                 onClick={() => { setSelectedColabId(null); setActiveTab('reportes'); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
@@ -483,20 +495,6 @@ export default function App() {
               </button>
 
               <button
-                id="tab_auditoria"
-                onClick={() => { setSelectedColabId(null); setActiveTab('auditoria'); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
-                  activeTab === 'auditoria'
-                    ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
-                }`}
-                title="Historial de Auditoría"
-              >
-                <History className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Historial</span>
-              </button>
-
-              <button
                 id="tab_usuarios"
                 onClick={() => { setSelectedColabId(null); setActiveTab('usuarios'); }}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
@@ -508,20 +506,6 @@ export default function App() {
               >
                 <Settings className="h-4 w-4 shrink-0" />
                 <span className="hidden lg:inline">Usuarios</span>
-              </button>
-
-              <button
-                id="tab_padrinos"
-                onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); }}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition duration-150 ${
-                  activeTab === 'padrinos'
-                    ? 'bg-blue-900 text-amber-400 font-extrabold border border-blue-800/40 shadow-2xs'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900/40'
-                }`}
-                title="Configuración de Padrinos"
-              >
-                <Award className="h-4 w-4 shrink-0" />
-                <span className="hidden lg:inline">Padrinos</span>
               </button>
             </nav>
 
@@ -693,6 +677,16 @@ export default function App() {
               </button>
 
               <button
+                onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); setIsMobileMenuOpen(false); }}
+                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
+                  activeTab === 'padrinos' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
+                }`}
+              >
+                <Award className="h-4 w-4 shrink-0 text-slate-400" />
+                <span>Padrinos</span>
+              </button>
+
+              <button
                 onClick={() => { setSelectedColabId(null); setActiveTab('reportes'); setIsMobileMenuOpen(false); }}
                 className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
                   activeTab === 'reportes' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
@@ -703,16 +697,6 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => { setSelectedColabId(null); setActiveTab('auditoria'); setIsMobileMenuOpen(false); }}
-                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
-                  activeTab === 'auditoria' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
-                }`}
-              >
-                <History className="h-4 w-4 shrink-0 text-slate-400" />
-                <span>Historial Cambios</span>
-              </button>
-
-              <button
                 onClick={() => { setSelectedColabId(null); setActiveTab('usuarios'); setIsMobileMenuOpen(false); }}
                 className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
                   activeTab === 'usuarios' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
@@ -720,16 +704,6 @@ export default function App() {
               >
                 <Settings className="h-4 w-4 shrink-0 text-slate-400" />
                 <span>Usuarios</span>
-              </button>
-
-              <button
-                onClick={() => { setSelectedColabId(null); setActiveTab('padrinos'); setIsMobileMenuOpen(false); }}
-                className={`w-full text-left p-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 ${
-                  activeTab === 'padrinos' ? 'bg-blue-900/60 text-amber-400 border border-blue-900/40' : 'text-slate-300 hover:bg-slate-900'
-                }`}
-              >
-                <Award className="h-4 w-4 shrink-0 text-slate-400" />
-                <span>Padrinos</span>
               </button>
             </div>
 
@@ -788,12 +762,6 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'auditoria' && (
-          <AuditHistory 
-            logs={auditLogs}
-          />
-        )}
-
         {activeTab === 'usuarios' && (
           <UsersConfig 
             usersList={usersList}
@@ -806,6 +774,7 @@ export default function App() {
         {activeTab === 'padrinos' && (
           <PadrinosConfig 
             padrinosList={padrinosList}
+            collaborators={collaborators}
             loggedInUser={currentUser}
             onAddPadrino={handleAddPadrino}
             onUpdatePadrino={handleUpdatePadrino}

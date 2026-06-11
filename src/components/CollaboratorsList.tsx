@@ -13,7 +13,8 @@ import {
   Lock,
   X,
   MapPin,
-  Check
+  Check,
+  User as UserIcon
 } from 'lucide-react';
 import { Collaborator, CollaboratorStatus, UserRole, Padrino } from '../types';
 import { getDiffInDays } from '../demoData';
@@ -41,6 +42,9 @@ export default function CollaboratorsList({
   const [filterStatus, setFilterStatus] = useState('Activo'); // Default to view Autores Activos
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Selected image and name for full visualizer modal popup
+  const [selectedImageModal, setSelectedImageModal] = useState<{ url: string; name: string } | null>(null);
 
   // New Collaborator Form details
   const [docId, setDocId] = useState('');
@@ -326,12 +330,12 @@ export default function CollaboratorsList({
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="text-slate-400 text-3xs font-extrabold uppercase tracking-wider bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-6 py-4">Colaborador</th>
-                  <th className="px-6 py-4">Ficha Técnica</th>
-                  <th className="px-6 py-4">Contacto institucional</th>
+                  <th className="px-6 py-4">Apadrinado</th>
+                  <th className="px-6 py-4">Cargo</th>
+                  <th className="px-6 py-4">Correo</th>
                   <th className="px-6 py-4">Ingreso</th>
-                  <th className="px-6 py-4">Líder / Padrino</th>
-                  <th className="px-6 py-4">Hitos Onboarding</th>
+                  <th className="px-6 py-4">Padrino</th>
+                  <th className="px-6 py-4">Etapas Apadrinamiento</th>
                   <th className="px-6 py-4 text-center">Estado</th>
                   <th className="px-6 py-4 text-right rounded-r-lg">Acción</th>
                 </tr>
@@ -358,7 +362,12 @@ export default function CollaboratorsList({
                             <img 
                               src={colab.avatar} 
                               alt={colab.fullName}
-                              className="h-9 w-9 rounded-full object-cover border border-[#2F5D73]/30 shadow-xs"
+                              className="h-9 w-9 rounded-full object-cover border border-[#2F5D73]/30 shadow-xs cursor-pointer hover:scale-110 hover:border-blue-500 transition-all duration-150"
+                              title="Haga clic para ampliar foto de perfil"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedImageModal({ url: colab.avatar!, name: colab.fullName });
+                              }}
                             />
                           ) : (
                             <div className="h-9 w-9 rounded-full bg-slate-150 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-xs uppercase font-sans">
@@ -389,11 +398,12 @@ export default function CollaboratorsList({
                         </span>
                       </td>
                       <td className="px-6 py-4.5 text-xs text-slate-600">
-                        <div className="font-bold text-slate-800">{colab.immediateBoss}</div>
-                        <div className="text-3xs text-blue-900 mt-1 font-semibold flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
-                          {colab.padrinoName ? `Pad: ${colab.padrinoName}` : 'Padrino: Sin asignar'}
+                        <div className="font-bold text-slate-800">
+                          {colab.padrinoName || 'Sin asignar'}
                         </div>
+                        {colab.padrinoName && (
+                          <div className="text-3xs text-slate-400 mt-0.5 font-medium">Padrino</div>
+                        )}
                       </td>
                       <td className="px-6 py-4.5">
                         <div className="flex items-center gap-1.5">
@@ -767,6 +777,61 @@ export default function CollaboratorsList({
 
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {/* Photo Viewer Modal */}
+      {selectedImageModal && (
+        <div 
+          id="colab-photo-viewer-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in transition-all duration-300"
+          onClick={() => setSelectedImageModal(null)}
+        >
+          <div 
+            className="relative max-w-sm w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col items-center p-6 transition-all transform scale-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="w-full flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+              <h4 className="text-xs font-black text-slate-100 flex items-center gap-2">
+                <UserIcon className="h-4 w-4 text-[#2F5D73]" />
+                Visualizador de Perfil (Colaborador)
+              </h4>
+              <button
+                type="button"
+                onClick={() => setSelectedImageModal(null)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition"
+                title="Cerrar Visualizador"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Portrait frame */}
+            <div className="relative w-64 h-64 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 flex items-center justify-center shadow-inner">
+              <img 
+                src={selectedImageModal.url} 
+                className="w-full h-full object-cover" 
+                alt={selectedImageModal.name} 
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            {/* Caption name */}
+            <div className="mt-4 text-center">
+              <p className="text-xs font-black text-white">{selectedImageModal.name}</p>
+              <p className="text-3xs text-[#2F5D73] font-bold uppercase tracking-widest mt-1">Colaborador en Proceso de Apadrinamiento</p>
+            </div>
+            
+            {/* Bottom Close Button */}
+            <button
+              type="button"
+              onClick={() => setSelectedImageModal(null)}
+              className="mt-6 w-full py-2 bg-[#2F5D73] hover:bg-[#1F2A33] text-white font-extrabold text-3xs uppercase tracking-widest rounded-xl transition"
+            >
+              Cerrar Vista
+            </button>
           </div>
         </div>
       )}

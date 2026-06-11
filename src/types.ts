@@ -70,6 +70,7 @@ export interface Padrino {
   email: string;
   phone: string;
   isActive: boolean;
+  avatar?: string; // Base64 data URL for Padrino's photo
 }
 
 export interface AuditLog {
