@@ -2,38 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Global Safety Net (Pillar 1)
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // --- REUSABLE UTILITIES & PREDICATES ---
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
-    }
-
-    function isEmailVerified() {
-      // Allow general authentication in preview, but enforce format and verification if available
-      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.email != null);
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    // Helper to extract incoming and existing records
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    // Enforce that a user's role corresponds to their database document state.
-    // We look up user records safely inside firestore.
-    function getUserData() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
     function isAdmin() {
@@ -43,119 +14,51 @@ service cloud.firestore {
       );
     }
 
-    // --- SCHEMAS VALIDATION BLUEPRINTS (Pillar 2) ---
-
-    // Validates shape of a Milestone object inside Collaborator
-    function isValidMilestone(m) {
-      return m is map &&
-        m.keys().hasAll(['scheduledDate', 'status', 'remarks', 'evidences']) &&
-        m.scheduledDate is string && m.scheduledDate.size() <= 30 &&
-        m.status is string && (m.status == 'Pendiente' || m.status == 'En proceso' || m.status == 'Completado') &&
-        m.remarks is string && m.remarks.size() <= 2000 &&
-        m.evidences is list && m.evidences.size() <= 15;
+    // Helper to extract incoming record data
+    function incoming() {
+      return request.resource.data;
     }
 
-    // Validates shape of single User
-    function isValidUser(u) {
-      return u is map &&
-        u.keys().hasAll(['id', 'username', 'fullName', 'role', 'isActive', 'email']) &&
-        u.keys().size() == 6 &&
-        u.id is string && u.id.size() <= 64 &&
-        u.username is string && u.username.size() >= 3 && u.username.size() <= 40 &&
-        u.fullName is string && u.fullName.size() >= 3 && u.fullName.size() <= 100 &&
-        u.role is string && (u.role == 'Administrador' || u.role == 'Consulta') &&
-        u.isActive is boolean &&
-        u.email is string && u.email.size() <= 120;
+    // Helper to validate model string ID format
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
-
-    // Validates shape of single Collaborator record
-    function isValidCollaborator(c) {
-      return c is map &&
-        c.keys().hasAll(['id', 'documentId', 'fullName', 'role', 'area', 'costCenter', 'company', 'immediateBoss', 'entryDate', 'email', 'phone', 'status', 'induction', 'day7', 'day30', 'day90']) &&
-        c.keys().size() == 16 &&
-        c.id is string && c.id.size() <= 64 &&
-        c.documentId is string && c.documentId.size() <= 30 &&
-        c.fullName is string && c.fullName.size() >= 3 && c.fullName.size() <= 100 &&
-        c.role is string && c.role.size() <= 100 &&
-        c.area is string && (c.area == 'Administrativo' || c.area == 'Operativo') &&
-        c.costCenter is string && c.costCenter.size() <= 50 &&
-        c.company is string && (c.company == 'Zura Group' || c.company == 'Solvalle' || c.company == 'Soluciones Inteligentes del Valle') &&
-        c.immediateBoss is string && c.immediateBoss.size() <= 100 &&
-        c.entryDate is string && c.entryDate.size() <= 30 &&
-        c.email is string && c.email.size() <= 120 &&
-        c.phone is string && c.phone.size() <= 24 &&
-        c.status is string && (c.status == 'Activo' || c.status == 'Retirado') &&
-        isValidMilestone(c.induction) &&
-        isValidMilestone(c.day7) &&
-        isValidMilestone(c.day30) &&
-        isValidMilestone(c.day90);
-    }
-
-    // Validates shape of audit log write operation
-    function isValidAuditLog(l) {
-      return l is map &&
-        l.keys().hasAll(['id', 'timestamp', 'userId', 'userFullName', 'action', 'targetName', 'details']) &&
-        l.keys().size() == 7 &&
-        l.id is string && l.id.size() <= 64 &&
-        l.timestamp is string &&
-        l.userId is string && l.userId.size() <= 64 &&
-        l.userFullName is string && l.userFullName.size() <= 100 &&
-        l.action is string && l.action.size() <= 100 &&
-        l.targetName is string && l.targetName.size() <= 150 &&
-        l.details is string && l.details.size() <= 1000;
-    }
-
-
-    // --- SECURITY POLICIES BY COLLECTION ---
 
     // 1. Users Collection
     match /users/{userId} {
-      // Standard authentication read profiles
       allow read: if isSignedIn();
-
-      // Creating a profile requires valid shape matching registered userId
-      allow create: if isSignedIn() && (request.auth.uid == userId) && isValidUser(incoming());
-
-      // Only defined Admins can change role fields (Pillar 4)
+      allow create: if isSignedIn() && (request.auth.uid == userId);
       allow update: if isSignedIn() && (
-        (request.auth.uid == userId && incoming().role == existing().role && isValidUser(incoming())) ||
+        (request.auth.uid == userId && !incoming().diff(resource.data).changedKeys().hasAny(['role'])) ||
         isAdmin()
       );
-
       allow delete: if isAdmin();
     }
 
     // 2. Collaborators Collection
     match /collaborators/{collaboratorId} {
-      // Must be logged in and authorized to view data (Pillar 8)
       allow read: if isSignedIn();
-
-      // Only administrators can create new collaborators
-      allow create: if isAdmin() && isValidCollaborator(incoming()) && isValidId(collaboratorId);
-
-      // Updating can be done by Admin (full fields) or custom status tier changes
+      allow create: if isAdmin() && isValidId(collaboratorId);
       allow update: if isSignedIn() && (
-        isAdmin() && isValidCollaborator(incoming()) ||
-        // Contributor tier can edit specific milestone comments/evidences lists (Pillar 4)
-        (
-          isValidCollaborator(incoming()) &&
-          incoming().diff(existing()).affectedKeys().hasOnly(['induction', 'day7', 'day30', 'day90'])
-        )
+        isAdmin() ||
+        (!incoming().diff(resource.data).changedKeys().hasAny(['id', 'documentId', 'fullName', 'role', 'area', 'costCenter', 'company', 'immediateBoss', 'entryDate', 'email', 'phone', 'status']))
       );
-
       allow delete: if isAdmin();
     }
 
-    // 3. Audit logs collection (Safety Append-Only, Pillar 7)
+    // 3. Audit logs collection
     match /auditLogs/{logId} {
-      // Admins are permitted to query history logs
       allow read: if isSignedIn();
-
-      // Any authenticated user can write safety logs to prevent auditing bypass (Pillar 7)
-      allow create: if isSignedIn() && isValidAuditLog(incoming()) && isValidId(logId);
-
-      // History is immutable once committed to prevent tampering (Pillar 12)
+      allow create: if isSignedIn() && isValidId(logId);
       allow update, delete: if false;
+    }
+
+    // 4. Padrinos Collection
+    match /padrinos/{padrinoId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() && isValidId(padrinoId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
   }

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Collaborator, CollaboratorStatus, UserRole, Padrino } from '../types';
 import { getDiffInDays } from '../demoData';
+import { compressImage } from '../utils';
 
 interface CollaboratorsListProps {
   collaborators: Collaborator[];
@@ -565,7 +566,9 @@ export default function CollaboratorsList({
                               const f = e.target.files[0];
                               const reader = new FileReader();
                               reader.onloadend = () => {
-                                setAvatar(reader.result as string);
+                                compressImage(reader.result as string, (compressedUrl) => {
+                                  setAvatar(compressedUrl);
+                                }, 400, 0.7);
                               };
                               reader.readAsDataURL(f);
                             }

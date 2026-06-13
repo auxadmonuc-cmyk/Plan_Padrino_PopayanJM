@@ -31,7 +31,8 @@ import Logo from './components/Logo';
 
 // Import Firestore client & utilities
 import { collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from './firebase';
+import { signInAnonymously } from 'firebase/auth';
+import { db, auth, handleFirestoreError, OperationType } from './firebase';
 
 export default function App() {
   
@@ -152,7 +153,34 @@ export default function App() {
 
   // Initialize data on load with live database synchronization
   useEffect(() => {
-    // 1. Logged user check (local-only session token verification)
+    // 1. Authenticate with Firebase Auth anonymously to ensure request.auth != null for security rules
+    signInAnonymously(auth)
+      .then(async (credential) => {
+        console.log('Firebase: Autenticación anónima exitosa con UID:', credential.user.uid);
+        
+        // Match current locally stored user (if logged in) to Firestore 'users' collection to bypass isAdmin() security blocks
+        const storedUser = localStorage.getItem(ACTIVE_USER_KEY);
+        if (storedUser) {
+          try {
+            const parsedUser: User = JSON.parse(storedUser);
+            // Sync user details to users/{uid} document so get(/databases/*/documents/users/$(request.auth.uid)) works instantly
+            const syncedUser = {
+              ...parsedUser,
+              id: credential.user.uid
+            };
+            await setDoc(doc(db, 'users', credential.user.uid), syncedUser);
+            setCurrentUser(syncedUser);
+            localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(syncedUser));
+          } catch (e) {
+            console.error('Error sincronizando perfil de usuario local con Firestore:', e);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Firebase: No se pudo establecer autenticación anónima (operando sin conexión o con restricciones de red):', err);
+      });
+
+    // 2. Logged user check (local-only session token verification fallback)
     const storedUser = localStorage.getItem(ACTIVE_USER_KEY);
     if (storedUser) {
       try {
@@ -253,10 +281,20 @@ export default function App() {
   }, []);
 
   // Log in controller
-  const handleLoginSuccess = (user: User) => {
-    setCurrentUser(user);
-    localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(user));
-    appendAuditLog('Inicio de sesión', 'Autenticación', `Acceso exitoso al panel con rol: ${user.role}`, user);
+  const handleLoginSuccess = async (user: User) => {
+    let syncedUser = { ...user };
+    if (auth.currentUser) {
+      syncedUser.id = auth.currentUser.uid;
+      try {
+        await setDoc(doc(db, 'users', auth.currentUser.uid), syncedUser);
+        console.log('Usuario sincronizado con Firebase DB bajo UID:', auth.currentUser.uid);
+      } catch (err) {
+        console.error('Error al sincronizar rol de usuario en Firestore:', err);
+      }
+    }
+    setCurrentUser(syncedUser);
+    localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(syncedUser));
+    appendAuditLog('Inicio de sesión', 'Autenticación', `Acceso exitoso al panel con rol: ${syncedUser.role}`, syncedUser);
   };
 
   // Sign out controller

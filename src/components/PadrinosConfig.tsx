@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Users, Plus, ShieldCheck, Mail, Lock, UserPlus, Trash2, Shield, Search, Phone, Briefcase, Award, Edit2, Check, X, Star, Calendar } from 'lucide-react';
 import { Padrino, User, Collaborator } from '../types';
+import { compressImage } from '../utils';
 
 interface PadrinosConfigProps {
   padrinosList: Padrino[];
@@ -238,7 +239,9 @@ export default function PadrinosConfig({
                           const f = e.target.files[0];
                           const reader = new FileReader();
                           reader.onloadend = () => {
-                            setNewAvatar(reader.result as string);
+                            compressImage(reader.result as string, (compressedUrl) => {
+                              setNewAvatar(compressedUrl);
+                            }, 400, 0.7);
                           };
                           reader.readAsDataURL(f);
                         }
@@ -441,7 +444,9 @@ export default function PadrinosConfig({
                                         const f = e.target.files[0];
                                         const reader = new FileReader();
                                         reader.onloadend = () => {
-                                          setEditAvatar(reader.result as string);
+                                          compressImage(reader.result as string, (compressedUrl) => {
+                                            setEditAvatar(compressedUrl);
+                                          }, 400, 0.7);
                                         };
                                         reader.readAsDataURL(f);
                                       }

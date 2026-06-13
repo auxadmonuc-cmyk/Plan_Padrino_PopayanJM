@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { Collaborator, Milestone, MilestoneStatus, FileType, Evidence, UserRole, CollaboratorStatus, Padrino } from '../types';
 import { getDiffInDays, getMilestoneStatusColor } from '../demoData';
+import { compressImage } from '../utils';
 
 interface CollaboratorCardProps {
   collaborator: Collaborator;
@@ -66,6 +67,7 @@ export default function CollaboratorCard({
   const [editStatus, setEditStatus] = useState<CollaboratorStatus>(collaborator.status);
   const [editAvatar, setEditAvatar] = useState(collaborator.avatar || '');
   const [editPadrinoId, setEditPadrinoId] = useState(collaborator.padrinoId || '');
+  const [editEntryDate, setEditEntryDate] = useState(collaborator.entryDate);
 
   // Selected Milestone for Details / Upload (induction, 7 days, 30 days, 90 days)
   const [selectedTab, setSelectedTab] = useState<'induction' | 'day7' | 'day30' | 'day90'>('induction');
@@ -100,6 +102,22 @@ export default function CollaboratorCard({
     setDragError('');
   }, [selectedTab, collaborator]);
 
+  // Sync edit profile state when collaborator object updates
+  React.useEffect(() => {
+    setEditFullName(collaborator.fullName);
+    setEditRole(collaborator.role);
+    setEditArea(collaborator.area);
+    setEditCostCenter(collaborator.costCenter);
+    setEditCompany(collaborator.company);
+    setEditBoss(collaborator.immediateBoss);
+    setEditEmail(collaborator.email);
+    setEditPhone(collaborator.phone);
+    setEditStatus(collaborator.status);
+    setEditAvatar(collaborator.avatar || '');
+    setEditPadrinoId(collaborator.padrinoId || '');
+    setEditEntryDate(collaborator.entryDate);
+  }, [collaborator]);
+
   // Overall progress percentage
   const globalProgressPct = useMemo(() => {
     const cInd = (collaborator.induction?.status === 'Completado') ? 1 : 0;
@@ -129,6 +147,29 @@ export default function CollaboratorCard({
 
     const matchedPadrino = padrinosList.find(p => p.id === editPadrinoId);
 
+    // Dynamic projection for matching dates if editEntryDate changed
+    let d7Str = collaborator.day7?.scheduledDate || '';
+    let d30Str = collaborator.day30?.scheduledDate || '';
+    let d90Str = collaborator.day90?.scheduledDate || '';
+
+    try {
+      const baseDate = new Date(editEntryDate + 'T00:00:00');
+      
+      const d7 = new Date(baseDate);
+      d7.setDate(baseDate.getDate() + 7);
+      d7Str = d7.toISOString().split('T')[0];
+
+      const d30 = new Date(baseDate);
+      d30.setDate(baseDate.getDate() + 30);
+      d30Str = d30.toISOString().split('T')[0];
+
+      const d90 = new Date(baseDate);
+      d90.setDate(baseDate.getDate() + 90);
+      d90Str = d90.toISOString().split('T')[0];
+    } catch (err) {
+      console.error('Error calculando nuevas proyecciones de fecha', err);
+    }
+
     const updatedColab: Collaborator = {
       ...collaborator,
       fullName: editFullName.trim(),
@@ -141,8 +182,37 @@ export default function CollaboratorCard({
       email: editEmail.trim(),
       phone: editPhone.trim(),
       status: editStatus,
+      entryDate: editEntryDate,
       padrinoId: editPadrinoId || undefined,
-      padrinoName: matchedPadrino ? matchedPadrino.fullName : undefined
+      padrinoName: matchedPadrino ? matchedPadrino.fullName : undefined,
+      induction: {
+        ...(collaborator.induction || {}),
+        scheduledDate: collaborator.induction?.status === 'Pendiente' ? editEntryDate : (collaborator.induction?.scheduledDate || editEntryDate),
+        status: collaborator.induction?.status || 'Pendiente',
+        remarks: collaborator.induction?.remarks || 'Inducción inicial programada para el día de ingreso.',
+        evidences: collaborator.induction?.evidences || []
+      },
+      day7: {
+        ...(collaborator.day7 || {}),
+        scheduledDate: collaborator.day7?.status === 'Pendiente' ? d7Str : d7Str,
+        status: collaborator.day7?.status || 'Pendiente',
+        remarks: collaborator.day7?.remarks || 'Planeación inicial automatizada.',
+        evidences: collaborator.day7?.evidences || []
+      },
+      day30: {
+        ...(collaborator.day30 || {}),
+        scheduledDate: collaborator.day30?.status === 'Pendiente' ? d30Str : d30Str,
+        status: collaborator.day30?.status || 'Pendiente',
+        remarks: collaborator.day30?.remarks || 'Planeación inicial automatizada.',
+        evidences: collaborator.day30?.evidences || []
+      },
+      day90: {
+        ...(collaborator.day90 || {}),
+        scheduledDate: collaborator.day90?.status === 'Pendiente' ? d90Str : d90Str,
+        status: collaborator.day90?.status || 'Pendiente',
+        remarks: collaborator.day90?.remarks || 'Planeación inicial automatizada.',
+        evidences: collaborator.day90?.evidences || []
+      }
     };
 
     onUpdateCollaborator(updatedColab);
@@ -193,46 +263,67 @@ export default function CollaboratorCard({
     else if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'gif') type = 'image';
     else if (ext === 'mp4' || ext === 'mov' || ext === 'avi' || ext === 'mkv') type = 'video';
 
-    // Format file size in KBs or MBs
-    let sizeStr = '500 KB';
-    if (size > 1024 * 1024) {
-      sizeStr = `${(size / (1024 * 1024)).toFixed(1)} MB`;
-    } else {
-      sizeStr = `${Math.round(size / 1024)} KB`;
+    // Check size limit for non-image files to avoid Firestore document 1MB limit crash
+    if (type !== 'image' && size > 850 * 1024) {
+      alert(`Error de almacenamiento:\nEl archivo "${name}" supera el tamaño máximo permitido de 850 KB.\nPara archivos grandes (PDF, Excel, Videos), por favor cargue un archivo más ligero o simplificado para garantizar que se guarde correctamente en la base de datos Firestore.`);
+      return;
     }
 
     setIsUploading(true);
 
-    setTimeout(() => {
-      const newEvidence: Evidence = {
-        id: `ev-${Date.now()}`,
-        fileName: name,
-        fileType: type,
-        fileSize: sizeStr,
-        uploadedAt: SIM_DATE,
-        uploadedBy: 'admin',
-        url: dataUrl
-      };
+    const saveEvidence = (finalDataUrl?: string, finalSize?: number) => {
+      // Format file size in KBs or MBs
+      let sizeStr = '500 KB';
+      const activeSize = finalSize !== undefined ? finalSize : size;
+      if (activeSize > 1024 * 1024) {
+        sizeStr = `${(activeSize / (1024 * 1024)).toFixed(1)} MB`;
+      } else {
+        sizeStr = `${Math.round(activeSize / 1024)} KB`;
+      }
 
-      const updatedMilestone: Milestone = {
-        ...currentMilestone,
-        evidences: [...currentMilestone.evidences, newEvidence]
-      };
+      setTimeout(() => {
+        const newEvidence: Evidence = {
+          id: `ev-${Date.now()}`,
+          fileName: name,
+          fileType: type,
+          fileSize: sizeStr,
+          uploadedAt: SIM_DATE,
+          uploadedBy: 'admin',
+          url: finalDataUrl
+        };
 
-      const updatedColab: Collaborator = {
-        ...collaborator,
-        [selectedTab]: updatedMilestone
-      };
+        const updatedMilestone: Milestone = {
+          ...currentMilestone,
+          evidences: [...currentMilestone.evidences, newEvidence]
+        };
 
-      onUpdateCollaborator(updatedColab);
-      onLogAudit(
-        'Carga de evidencia',
-        collaborator.fullName,
-        `Archivo "${name}" cargado y asociado a ${selectedTab === 'induction' ? 'Inducción' : selectedTab === 'day7' ? 'Día 7' : selectedTab === 'day30' ? 'Día 30' : 'Día 95'}`
-      );
+        const updatedColab: Collaborator = {
+          ...collaborator,
+          [selectedTab]: updatedMilestone
+        };
 
-      setIsUploading(false);
-    }, 900);
+        onUpdateCollaborator(updatedColab);
+        onLogAudit(
+          'Carga de evidencia',
+          collaborator.fullName,
+          `Archivo "${name}" cargado y asociado a ${selectedTab === 'induction' ? 'Inducción' : selectedTab === 'day7' ? 'Día 7' : selectedTab === 'day30' ? 'Día 30' : 'Día 90'}`
+        );
+
+        setIsUploading(false);
+      }, 900);
+    };
+
+    if (type === 'image' && dataUrl) {
+      // Compress image to fit within Firebase document bounds optimally
+      compressImage(dataUrl, (compressedUrl) => {
+        // Calculate estimated size of compressed Base64 string
+        const head = compressedUrl.split(',')[0];
+        const approxBytes = Math.round((compressedUrl.length - head.length - 1) * 3 / 4);
+        saveEvidence(compressedUrl, approxBytes);
+      }, 600, 0.7); // 600px max dimension, 70% quality (compact but perfect quality)
+    } else {
+      saveEvidence(dataUrl, size);
+    }
   };
 
   // Trigger manual select
@@ -481,6 +572,7 @@ export default function CollaboratorCard({
                       setEditStatus(collaborator.status);
                       setEditAvatar(collaborator.avatar || '');
                       setEditPadrinoId(collaborator.padrinoId || '');
+                      setEditEntryDate(collaborator.entryDate);
                       setIsEditMode(true);
                     }}
                     className="w-full mt-4 flex items-center justify-center gap-1.5 py-2.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition active:scale-95"
@@ -634,6 +726,16 @@ export default function CollaboratorCard({
                     <option value="Activo">Activo</option>
                     <option value="Retirado">Retirado / Desvinculado</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-3xs text-slate-400 block font-extrabold uppercase font-black text-amber-500">Fecha de ingreso</label>
+                  <input
+                    type="date"
+                    value={editEntryDate}
+                    onChange={e => setEditEntryDate(e.target.value)}
+                    className="mt-1 w-full bg-slate-900 border border-slate-800 text-white rounded-lg p-1.5 text-xs focus:ring-amber-500 font-bold"
+                  />
                 </div>
 
                 {/* Selección de Padrino */}
