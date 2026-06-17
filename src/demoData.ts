@@ -22,9 +22,191 @@ export const DEFAULT_USERS: User[] = [
   }
 ];
 
-export const INITIAL_COLLABORATORS: Collaborator[] = [];
+export const INITIAL_COLLABORATORS: Collaborator[] = [
+  {
+    id: 'c001',
+    documentId: '1234567890',
+    fullName: 'Juan Carlos Rodríguez',
+    role: 'Ingeniero de Sistemas',
+    area: 'Tecnología',
+    costCenter: 'CC-001',
+    company: 'Plan Padrino Popayán',
+    immediateBoss: 'María González López',
+    entryDate: '2026-05-27',
+    email: 'juan.rodriguez@empresa.com',
+    phone: '+57 3001234567',
+    status: 'Activo',
+    padrinoId: 'p001',
+    padrinoName: 'Carlos Alberto Pérez',
+    induction: {
+      scheduledDate: '2026-05-27',
+      executedDate: '2026-05-27',
+      status: 'Completado',
+      remarks: 'Inducción exitosa completada',
+      evidences: []
+    },
+    day7: {
+      scheduledDate: '2026-06-03',
+      executedDate: '2026-06-03',
+      status: 'Completado',
+      remarks: 'Primera semana de adaptación completada',
+      evidences: []
+    },
+    day30: {
+      scheduledDate: '2026-06-26',
+      executedDate: undefined,
+      status: 'En proceso',
+      remarks: 'Evaluación a los 30 días en progreso',
+      evidences: []
+    },
+    day90: {
+      scheduledDate: '2026-08-25',
+      executedDate: undefined,
+      status: 'Pendiente',
+      remarks: '',
+      evidences: []
+    }
+  },
+  {
+    id: 'c002',
+    documentId: '0987654321',
+    fullName: 'Ana María Gómez Martínez',
+    role: 'Analista de RRHH',
+    area: 'Talento Humano',
+    costCenter: 'CC-002',
+    company: 'Plan Padrino Popayán',
+    immediateBoss: 'Patricia Sánchez Ruiz',
+    entryDate: '2026-06-02',
+    email: 'ana.gomez@empresa.com',
+    phone: '+57 3009876543',
+    status: 'Activo',
+    padrinoId: 'p002',
+    padrinoName: 'Laura Fernández García',
+    induction: {
+      scheduledDate: '2026-06-02',
+      executedDate: '2026-06-02',
+      status: 'Completado',
+      remarks: 'Inducción completada con éxito',
+      evidences: []
+    },
+    day7: {
+      scheduledDate: '2026-06-09',
+      executedDate: undefined,
+      status: 'Pendiente',
+      remarks: '',
+      evidences: []
+    },
+    day30: {
+      scheduledDate: '2026-07-02',
+      executedDate: undefined,
+      status: 'Pendiente',
+      remarks: '',
+      evidences: []
+    },
+    day90: {
+      scheduledDate: '2026-09-01',
+      executedDate: undefined,
+      status: 'Pendiente',
+      remarks: '',
+      evidences: []
+    }
+  },
+  {
+    id: 'c003',
+    documentId: '1111111111',
+    fullName: 'Miguel Ángel López Castro',
+    role: 'Diseñador Gráfico',
+    area: 'Marketing',
+    costCenter: 'CC-003',
+    company: 'Plan Padrino Popayán',
+    immediateBoss: 'Roberto Díaz Flores',
+    entryDate: '2026-05-01',
+    email: 'miguel.lopez@empresa.com',
+    phone: '+57 3015555555',
+    status: 'Retirado',
+    padrinoId: 'p001',
+    padrinoName: 'Carlos Alberto Pérez',
+    induction: {
+      scheduledDate: '2026-05-01',
+      executedDate: '2026-05-01',
+      status: 'Completado',
+      remarks: 'Inducción completada',
+      evidences: []
+    },
+    day7: {
+      scheduledDate: '2026-05-08',
+      executedDate: '2026-05-08',
+      status: 'Completado',
+      remarks: 'Primera semana completada',
+      evidences: []
+    },
+    day30: {
+      scheduledDate: '2026-05-31',
+      executedDate: '2026-05-31',
+      status: 'Completado',
+      remarks: 'Evaluación a 30 días completada - Desempeño excelente',
+      evidences: []
+    },
+    day90: {
+      scheduledDate: '2026-07-30',
+      executedDate: undefined,
+      status: 'Pendiente',
+      remarks: '',
+      evidences: []
+    }
+  }
+];
 
-export const INITIAL_AUDIT_LOGS: AuditLog[] = [];
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [
+  {
+    id: 'log001',
+    timestamp: '2026-06-16T10:30:00Z',
+    userId: 'u1',
+    userFullName: 'Administrador de Talento Humano',
+    action: 'CREATE',
+    targetName: 'Juan Carlos Rodríguez',
+    entity: 'Collaborator',
+    entityId: 'c001',
+    details: 'Nuevo colaborador registrado: Juan Carlos Rodríguez',
+    changes: { status: 'Activo', fullName: 'Juan Carlos Rodríguez' }
+  },
+  {
+    id: 'log002',
+    timestamp: '2026-06-03T14:15:00Z',
+    userId: 'u1',
+    userFullName: 'Administrador de Talento Humano',
+    action: 'UPDATE',
+    targetName: 'Juan Carlos Rodríguez',
+    entity: 'Milestone',
+    entityId: 'c001_day7',
+    details: 'Hito "Día 7" marcado como completado para Juan Carlos Rodríguez',
+    changes: { status: 'Completado', executedDate: '2026-06-03' }
+  },
+  {
+    id: 'log003',
+    timestamp: '2026-06-02T09:00:00Z',
+    userId: 'u1',
+    userFullName: 'Administrador de Talento Humano',
+    action: 'CREATE',
+    targetName: 'Ana María Gómez Martínez',
+    entity: 'Collaborator',
+    entityId: 'c002',
+    details: 'Nuevo colaborador registrado: Ana María Gómez Martínez',
+    changes: { status: 'Activo', fullName: 'Ana María Gómez Martínez' }
+  },
+  {
+    id: 'log004',
+    timestamp: '2026-06-01T16:45:00Z',
+    userId: 'u1',
+    userFullName: 'Administrador de Talento Humano',
+    action: 'UPDATE',
+    targetName: 'Miguel Ángel López Castro',
+    entity: 'Collaborator',
+    entityId: 'c003',
+    details: 'Estado del colaborador actualizado a Retirado: Miguel Ángel López Castro',
+    changes: { status: 'Retirado' }
+  }
+];
 
 // Helper to get raw date string from today
 export function getDiffInDays(dateStr1: string, dateStr2: string = '2026-06-06'): number {

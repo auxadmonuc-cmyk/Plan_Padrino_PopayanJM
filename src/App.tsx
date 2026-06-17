@@ -286,10 +286,14 @@ export default function App() {
     if (auth.currentUser) {
       syncedUser.id = auth.currentUser.uid;
       try {
-        await setDoc(doc(db, 'users', auth.currentUser.uid), syncedUser);
-        console.log('Usuario sincronizado con Firebase DB bajo UID:', auth.currentUser.uid);
+        // Sincronizar con merge:true para no overwrite datos existentes
+        await setDoc(doc(db, 'users', auth.currentUser.uid), syncedUser, { merge: true });
+        console.log('✅ Login exitoso. Usuario sincronizado con UID:', auth.currentUser.uid, 'Rol:', syncedUser.role);
+        addToast(`✅ Bienvenido ${syncedUser.fullName} (${syncedUser.role})`, 'success');
       } catch (err) {
-        console.error('Error al sincronizar rol de usuario en Firestore:', err);
+        console.error('❌ Error al sincronizar rol de usuario en Firestore:', err);
+        addToast(`⚠️ Error de sincronización: ${err instanceof Error ? err.message : String(err)}`, 'warning');
+        return; // No continuar si la sincronización falla
       }
     }
     setCurrentUser(syncedUser);
@@ -337,13 +341,25 @@ export default function App() {
 
   // Operations: Add collaborator
   const handleAddCollaborator = async (newColab: Collaborator) => {
+    // Validar que el usuario sea admin antes de guardar
+    if (!currentUser || currentUser.role !== 'Administrador') {
+      addToast('❌ Solo administradores pueden registrar colaboradores', 'error');
+      console.error('Permiso denegado: usuario no es administrador');
+      return;
+    }
+
     const updated = [newColab, ...collaborators];
     handleUpdateCollaborators(updated);
     addToast(`¡Colaborador ${newColab.fullName} registrado correctamente!`, 'success');
     try {
+      console.log('📝 Guardando colaborador en Firestore:', newColab.id);
       await setDoc(doc(db, 'collaborators', newColab.id), newColab);
+      console.log('✅ Colaborador guardado exitosamente en Firestore');
+      appendAuditLog('Creación de colaborador', newColab.fullName, `Nuevo colaborador registrado: ${newColab.email}`);
     } catch (error) {
+      console.error('❌ Error guardando colaborador:', error);
       handleFirestoreError(error, OperationType.WRITE, `collaborators/${newColab.id}`);
+      addToast(`❌ Error guardando en Firebase: ${error instanceof Error ? error.message : 'Error desconocido'}`, 'error');
     }
   };
 
@@ -353,9 +369,14 @@ export default function App() {
     handleUpdateCollaborators(updated);
     addToast(`¡Cambios de ${updatedColab.fullName} guardados con éxito!`, 'success');
     try {
+      console.log('📝 Actualizando colaborador en Firestore:', updatedColab.id);
       await setDoc(doc(db, 'collaborators', updatedColab.id), updatedColab);
+      console.log('✅ Colaborador actualizado exitosamente');
+      appendAuditLog('Actualización de colaborador', updatedColab.fullName, `Cambios guardados en perfil del colaborador`);
     } catch (error) {
+      console.error('❌ Error actualizando colaborador:', error);
       handleFirestoreError(error, OperationType.WRITE, `collaborators/${updatedColab.id}`);
+      addToast(`❌ Error actualizando en Firebase: ${error instanceof Error ? error.message : 'Error desconocido'}`, 'error');
     }
   };
 

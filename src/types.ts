@@ -78,9 +78,12 @@ export interface AuditLog {
   timestamp: string;
   userId: string;
   userFullName: string;
-  action: string; // e.g. 'Registro de colaborador', 'Actualización Día 7', 'Carga de evidencia'
-  targetName: string; // e.g. 'Juan Pérez'
-  details: string;
+  action: string; // 'CREATE', 'UPDATE', 'DELETE', 'READ', or descriptive text
+  targetName?: string; // Entity name (e.g., 'Juan Pérez', 'Admin User')
+  entity?: 'Collaborator' | 'Milestone' | 'Padrino' | 'User' | 'Evidence'; // Entity type
+  entityId?: string; // ID of the affected entity
+  details: string; // Human-readable description
+  changes?: Record<string, any>; // What changed
 }
 
 export interface Alert {
