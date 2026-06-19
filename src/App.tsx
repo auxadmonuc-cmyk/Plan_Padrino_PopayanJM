@@ -344,22 +344,35 @@ export default function App() {
     // Validar que el usuario sea admin antes de guardar
     if (!currentUser || currentUser.role !== 'Administrador') {
       addToast('❌ Solo administradores pueden registrar colaboradores', 'error');
-      console.error('Permiso denegado: usuario no es administrador');
+      console.error('Permiso denegado: usuario no es administrador', currentUser);
       return;
     }
 
-    const updated = [newColab, ...collaborators];
-    handleUpdateCollaborators(updated);
-    addToast(`¡Colaborador ${newColab.fullName} registrado correctamente!`, 'success');
     try {
-      console.log('📝 Guardando colaborador en Firestore:', newColab.id);
+      // 1) Guardar primero en Firestore (fuente de verdad)
+      console.log('📝 Guardando colaborador en Firestore (fuente de verdad):', newColab.id);
       await setDoc(doc(db, 'collaborators', newColab.id), newColab);
       console.log('✅ Colaborador guardado exitosamente en Firestore');
+
+      // 2) Solo si Firestore OK: actualizar UI/localStorage
+      const updated = [newColab, ...collaborators];
+      handleUpdateCollaborators(updated);
+
+      addToast(`¡Colaborador ${newColab.fullName} registrado correctamente!`, 'success');
       appendAuditLog('Creación de colaborador', newColab.fullName, `Nuevo colaborador registrado: ${newColab.email}`);
     } catch (error) {
-      console.error('❌ Error guardando colaborador:', error);
-      handleFirestoreError(error, OperationType.WRITE, `collaborators/${newColab.id}`);
-      addToast(`❌ Error guardando en Firebase: ${error instanceof Error ? error.message : 'Error desconocido'}`, 'error');
+      console.error('❌ Error guardando colaborador en Firestore:', error);
+
+      // Mostrar error real y NO dejar la UI “como si” hubiera guardado
+      const message = error instanceof Error ? error.message : 'Error desconocido'
+      addToast(`❌ No se pudo guardar en Firebase: ${message}`, 'error');
+
+      // Mantener tu logging estructurado (lo lanza)
+      try {
+        handleFirestoreError(error, OperationType.WRITE, `collaborators/${newColab.id}`);
+      } catch {
+        // Evitar que el throw rompa la UI; el toast ya informa
+      }
     }
   };
 
